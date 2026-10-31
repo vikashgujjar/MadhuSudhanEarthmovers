@@ -1,0 +1,80 @@
+{% extends "layouts/app.html" %}
+{% load erp %}
+{% block title %}Approvals{% endblock %}
+{% block header_title %}Transaction Approval Workflow{% endblock %}
+{% block content %}
+<div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+  <div><h1 class="page-title">Approvals</h1><p class="page-subtitle">Entries made by Entry Users wait here. Only approved transactions count in dashboards, balances and reports.</p></div>
+</div>
+
+<form method="post" action="{% url 'finance:bulk_approve' %}" id="bulk-form" data-confirm="Approve all selected transactions?">{% csrf_token %}</form>
+
+{% if not incomes and not expenses and not payments %}
+<div class="card card-body py-16 text-center">
+  <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"><i data-lucide="badge-check" class="h-7 w-7"></i></div>
+  <p class="mt-4 font-semibold text-navy-800">All caught up</p>
+  <p class="text-sm text-slate-500">There are no transactions waiting for approval.</p>
+</div>
+{% else %}
+<div class="no-print mb-4 flex justify-end"><button form="bulk-form" class="btn-success"><i data-lucide="check-check"></i> Approve selected</button></div>
+{% endif %}
+
+
+{% if incomes %}
+<div class="card mb-6">
+  <div class="card-header"><h2 class="card-title">Income ({{ incomes|length }})</h2></div>
+  <div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th><input type="checkbox" class="form-check" data-check-all="income" aria-label="Select all income"></th><th>Date</th><th>Invoice</th><th>Customer</th><th>Vehicle</th><th>Billing</th><th class="num">Amount</th><th>Entered by</th><th class="text-right">Action</th></tr></thead>
+    <tbody>{% for i in incomes %}
+      <tr>
+        <td><input type="checkbox" name="income" value="{{ i.pk }}" form="bulk-form" class="form-check" data-check-group="income" aria-label="Select {{ i.number }}"></td>
+        <td>{{ i.date|date:"d M Y" }}</td>
+        <td><a href="{% url 'finance:income_detail' i.pk %}" class="font-semibold text-navy-800 hover:text-brand-600">{{ i.number }}</a></td>
+        <td>{{ i.customer.name }}</td><td>{{ i.vehicle.display_name }}</td>
+        <td class="text-xs">{{ i.get_billing_type_display }}{% if i.quantity %}<div class="text-slate-500">{{ i.quantity|floatformat:"-2" }} {{ i.unit_label }} × {{ i.rate|inr }}</div>{% endif %}</td>
+        <td class="num font-semibold">{{ i.amount|inr }}</td><td>{{ i.created_by }}</td>
+        <td>{% include "finance/_approve_actions.html" with kind="income" obj=i %}</td>
+      </tr>{% endfor %}</tbody>
+  </table></div>
+</div>
+{% endif %}
+
+{% if expenses %}
+<div class="card mb-6">
+  <div class="card-header"><h2 class="card-title">Expenses ({{ expenses|length }})</h2></div>
+  <div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th><input type="checkbox" class="form-check" data-check-all="expense" aria-label="Select all expenses"></th><th>Date</th><th>No.</th><th>Category</th><th>Vehicle</th><th>Driver</th><th class="num">Amount</th><th>Entered by</th><th class="text-right">Action</th></tr></thead>
+    <tbody>{% for e in expenses %}
+      <tr>
+        <td><input type="checkbox" name="expense" value="{{ e.pk }}" form="bulk-form" class="form-check" data-check-group="expense" aria-label="Select {{ e.number }}"></td>
+        <td>{{ e.date|date:"d M Y" }}</td>
+        <td><a href="{% url 'finance:expense_detail' e.pk %}" class="font-semibold text-navy-800 hover:text-brand-600">{{ e.number }}</a></td>
+        <td>{{ e.get_category_display }}{% if e.is_driver_expense %}<div class="text-xs text-slate-500">{{ e.get_driver_expense_type_display }}</div>{% endif %}</td>
+        <td>{{ e.vehicle.display_name|default:"General" }}</td><td>{{ e.driver.name|default:"—" }}</td>
+        <td class="num font-semibold">{{ e.amount|inr }}</td><td>{{ e.created_by }}</td>
+        <td>{% include "finance/_approve_actions.html" with kind="expense" obj=e %}</td>
+      </tr>{% endfor %}</tbody>
+  </table></div>
+</div>
+{% endif %}
+
+{% if payments %}
+<div class="card mb-6">
+  <div class="card-header"><h2 class="card-title">Payments ({{ payments|length }})</h2></div>
+  <div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th><input type="checkbox" class="form-check" data-check-all="payment" aria-label="Select all payments"></th><th>Date</th><th>Receipt</th><th>Customer</th><th>Invoice</th><th>Mode</th><th class="num">Amount</th><th>Entered by</th><th class="text-right">Action</th></tr></thead>
+    <tbody>{% for p in payments %}
+      <tr>
+        <td><input type="checkbox" name="payment" value="{{ p.pk }}" form="bulk-form" class="form-check" data-check-group="payment" aria-label="Select {{ p.number }}"></td>
+        <td>{{ p.date|date:"d M Y" }}</td>
+        <td><a href="{% url 'finance:payment_detail' p.pk %}" class="font-semibold text-navy-800 hover:text-brand-600">{{ p.number }}</a></td>
+        <td>{{ p.customer.name }}</td>
+        <td>{% if p.income %}{{ p.income.number }}{% if p.income.status == 'PENDING' %} <span class="badge-amber">invoice pending</span>{% endif %}{% else %}Advance{% endif %}</td>
+        <td>{{ p.get_mode_display }}</td>
+        <td class="num font-semibold">{{ p.amount|inr }}</td><td>{{ p.created_by }}</td>
+        <td>{% include "finance/_approve_actions.html" with kind="payment" obj=p %}</td>
+      </tr>{% endfor %}</tbody>
+  </table></div>
+</div>
+{% endif %}
+{% endblock %}

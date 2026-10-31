@@ -1,0 +1,19 @@
+# Madhusudhan Earthmover ERP - place in the website folder (e.g. public_html).
+# Sends every request to Laravel's public/ folder, so nothing else
+# (.env, app code, storage, uploaded bills) can be downloaded directly.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Always use HTTPS (Hostinger provides a free SSL certificate).
+    RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Fallback if rewriting is ever disabled: never serve these files.
+<FilesMatch "^(\.env.*|composer\.(json|lock)|artisan|phpunit\.xml|tailwind\.config\.js)$">
+    Require all denied
+</FilesMatch>
+Options -Indexes

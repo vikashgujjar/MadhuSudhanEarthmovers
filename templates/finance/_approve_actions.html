@@ -1,0 +1,14 @@
+<div class="flex flex-col items-end gap-1">
+  <div class="flex items-center gap-1">
+    <form method="post" action="{% url 'finance:approve' kind obj.pk %}">{% csrf_token %}
+      <button class="btn-success btn-sm" title="Approve"><i data-lucide="check"></i> Approve</button>
+    </form>
+    <details class="group">
+      <summary class="btn-secondary btn-sm cursor-pointer list-none text-red-600"><i data-lucide="x"></i> Reject</summary>
+      <form method="post" action="{% url 'finance:reject' kind obj.pk %}" class="mt-2 flex w-64 gap-1">{% csrf_token %}
+        <input type="text" name="reason" required maxlength="255" class="form-input py-1.5 text-xs" placeholder="Reason (required)" aria-label="Reason for rejecting {{ obj.number }}">
+        <button class="btn-danger btn-sm">Reject</button>
+      </form>
+    </details>
+  </div>
+</div>

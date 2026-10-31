@@ -1,0 +1,45 @@
+{% extends "layouts/app.html" %}
+{% load erp %}
+{% block title %}Audit Logs{% endblock %}
+{% block header_title %}Audit Logs{% endblock %}
+{% block content %}
+<div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <h1 class="page-title">Audit logs</h1>
+    <p class="page-subtitle">Append-only history of logins, transaction changes, approvals, exports and settings. Entries cannot be edited or deleted.</p>
+  </div>
+  {% include "partials/export_buttons.html" %}
+</div>
+<div class="card">
+  <form method="get" class="grid gap-3 border-b border-slate-100 p-4 sm:grid-cols-2 lg:grid-cols-6">
+    <input type="search" name="q" value="{{ request.GET.q }}" placeholder="Search record, user…" class="form-input lg:col-span-2">
+    <select name="action" class="form-input"><option value="">All actions</option>{% for v, l in actions %}<option value="{{ v }}" {% if request.GET.action == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+    <select name="model" class="form-input"><option value="">All records</option>{% for m in models %}{% if m %}<option value="{{ m }}" {% if request.GET.model == m %}selected{% endif %}>{{ m }}</option>{% endif %}{% endfor %}</select>
+    <select name="user" class="form-input"><option value="">All users</option>{% for u in users %}<option value="{{ u.pk }}" {% if request.GET.user == u.pk|stringformat:'s' %}selected{% endif %}>{{ u.username }}</option>{% endfor %}</select>
+    <div class="flex gap-2"><button class="btn-navy flex-1"><i data-lucide="filter"></i> Filter</button>{% if request.GET %}<a href="{% url 'audit:list' %}" class="btn-ghost">Clear</a>{% endif %}</div>
+    <label class="text-xs text-slate-500">From<input type="date" name="from" value="{{ request.GET.from }}" class="form-input mt-1"></label>
+    <label class="text-xs text-slate-500">To<input type="date" name="to" value="{{ request.GET.to }}" class="form-input mt-1"></label>
+  </form>
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Record</th><th>Changes</th><th>IP</th><th></th></tr></thead>
+      <tbody>
+      {% for log in logs %}
+      <tr>
+        <td class="text-slate-500">{{ log.timestamp|date:"d M Y, H:i:s" }}</td>
+        <td class="font-medium text-navy-800">{{ log.username|default:"—" }}</td>
+        <td><span class="{% if log.action == 'DELETE' or log.action == 'REJECT' or log.action == 'LOGIN_FAILED' %}badge-red{% elif log.action == 'APPROVE' or log.action == 'CREATE' %}badge-green{% elif log.action == 'UPDATE' or log.action == 'SETTINGS' %}badge-amber{% else %}badge-slate{% endif %}">{{ log.get_action_display }}</span></td>
+        <td class="max-w-xs truncate"><span class="text-xs text-slate-500">{{ log.model_name }}</span> {{ log.object_repr }}</td>
+        <td class="max-w-xs truncate text-xs text-slate-500">{% if log.changes.fields %}{{ log.changes.fields|length }} field{{ log.changes.fields|length|pluralize }} changed{% elif log.changes.note %}{{ log.changes.note }}{% elif log.changes.reason %}Reason: {{ log.changes.reason }}{% endif %}</td>
+        <td class="text-xs text-slate-500">{{ log.ip_address|default:"" }}</td>
+        <td class="text-right"><a href="{% url 'audit:detail' log.pk %}" class="btn-ghost btn-sm">View</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="py-12 text-center text-slate-500">No audit entries match your filters.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "partials/pagination.html" %}
+</div>
+{% endblock %}

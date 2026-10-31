@@ -1,0 +1,41 @@
+{% extends "layouts/app.html" %}
+{% load erp %}
+{% block title %}Cash Book{% endblock %}
+{% block header_title %}Cash Book{% endblock %}
+{% block content %}
+{% include "reports/_header.html" with title="Cash book" icon="book-open" %}
+<form method="get" class="no-print card mb-6 flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+  {% include "partials/period_fields.html" %}
+  <select name="mode" class="form-input sm:w-48"><option value="">All modes (cash + bank)</option>{% for v, l in modes %}<option value="{{ v }}" {% if request.GET.mode == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+  <button class="btn-navy"><i data-lucide="filter"></i> Apply</button>
+</form>
+<div class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+  <div class="kpi"><p class="kpi-label">Opening balance</p><p class="kpi-value">{{ business.currency_symbol }}{{ book.opening|inr }}</p></div>
+  <div class="kpi"><p class="kpi-label">Receipts</p><p class="kpi-value !text-emerald-700">{{ business.currency_symbol }}{{ book.total_receipts|inr }}</p><p class="mt-1 text-xs text-slate-500">Approved customer payments</p></div>
+  <div class="kpi"><p class="kpi-label">Payments</p><p class="kpi-value !text-brand-600">{{ business.currency_symbol }}{{ book.total_payments|inr }}</p><p class="mt-1 text-xs text-slate-500">Approved expenses</p></div>
+  <div class="kpi"><div class="absolute inset-x-0 top-0 h-1 bg-brand-500"></div><p class="kpi-label">Closing balance</p><p class="kpi-value {% if book.closing < 0 %}!text-red-600{% endif %}">{{ business.currency_symbol }}{{ book.closing|inr }}</p></div>
+</div>
+<div class="card">
+  <div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th>Date</th><th>Voucher</th><th>Particulars</th><th>Mode</th><th class="num">Receipts</th><th class="num">Payments</th><th class="num">Balance</th></tr></thead>
+    <tbody>
+      <tr class="bg-slate-50/70"><td colspan="6" class="font-semibold text-slate-600">Opening balance{% if period.start %} on {{ period.start|date:"d M Y" }}{% endif %}{% if request.GET.mode %} (selected mode only){% endif %}</td><td class="num font-semibold">{{ book.opening|inr }}</td></tr>
+      {% for e in book.entries %}
+      <tr>
+        <td>{{ e.date|date:"d M Y" }}</td>
+        <td><a href="{{ e.url }}" class="font-semibold text-navy-800 hover:text-brand-600">{{ e.number }}</a></td>
+        <td class="max-w-md whitespace-normal">{{ e.particulars }}</td>
+        <td>{{ e.mode }}</td>
+        <td class="num text-emerald-700">{% if e.receipt %}{{ e.receipt|inr }}{% endif %}</td>
+        <td class="num text-brand-600">{% if e.payment %}{{ e.payment|inr }}{% endif %}</td>
+        <td class="num font-semibold {% if e.balance < 0 %}text-red-600{% endif %}">{{ e.balance|inr }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="py-10 text-center text-slate-500">No approved receipts or payments in this period.</td></tr>
+      {% endfor %}
+    </tbody>
+    <tfoot><tr><td colspan="4">Closing balance</td><td class="num">{{ book.total_receipts|inr }}</td><td class="num">{{ book.total_payments|inr }}</td><td class="num">{{ book.closing|inr }}</td></tr></tfoot>
+  </table></div>
+</div>
+<p class="mt-3 text-xs text-slate-500">The cash book records money actually received and paid. Billed-but-unpaid income does not appear here; see Customer Outstanding. Opening cash balance is set in Business Settings.</p>
+{% endblock %}

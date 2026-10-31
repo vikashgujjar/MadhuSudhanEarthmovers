@@ -1,0 +1,187 @@
+{% extends "layouts/app.html" %}
+{% load static erp %}
+{% block title %}Dashboard{% endblock %}
+{% block header_title %}Dashboard{% endblock %}
+{% block content %}
+<div class="mb-6 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+  <div>
+    <h1 class="page-title">Business Dashboard</h1>
+    <p class="page-subtitle">{{ business.business_name }} · {{ period.label }} · approved transactions only</p>
+  </div>
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+    <form method="get" class="no-print flex flex-col gap-2 sm:flex-row sm:items-center">
+      {% include "partials/period_fields.html" with autosubmit=True %}
+      <button class="btn-navy {% if period.key != 'custom' %}hidden{% endif %}" data-period-custom>Apply</button>
+    </form>
+  </div>
+</div>
+
+{% if user|can:"add_income" or user|can:"add_expense" or user|can:"add_driver_expense" or user|can:"record_payment" %}
+<div class="no-print mb-6 grid grid-cols-2 gap-3 xl:grid-cols-4">
+  {% if user|can:"add_income" %}
+  <a href="{% url 'finance:income_create' %}" class="card flex items-center gap-3 p-4 transition hover:ring-2 hover:ring-brand-300">
+    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-navy-800 text-brand-500"><i data-lucide="trending-up" class="h-5 w-5"></i></span>
+    <span class="min-w-0"><span class="block font-semibold text-navy-800">Add income</span><span class="hidden text-xs text-slate-500 sm:block">Hourly, daily, fixed or manual</span></span>
+  </a>
+  {% endif %}
+  {% if user|can:"add_expense" %}
+  <a href="{% url 'finance:expense_create' %}" class="card flex items-center gap-3 p-4 transition hover:ring-2 hover:ring-brand-300">
+    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-500 text-white"><i data-lucide="receipt" class="h-5 w-5"></i></span>
+    <span class="min-w-0"><span class="block font-semibold text-navy-800">Add expense</span><span class="hidden text-xs text-slate-500 sm:block">Diesel, repairs, spare parts…</span></span>
+  </a>
+  {% endif %}
+  {% if user|can:"add_driver_expense" %}
+  <a href="{% url 'finance:driver_expense_create' %}" class="card flex items-center gap-3 p-4 transition hover:ring-2 hover:ring-brand-300">
+    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-700"><i data-lucide="hard-hat" class="h-5 w-5"></i></span>
+    <span class="min-w-0"><span class="block font-semibold text-navy-800">Driver expense</span><span class="hidden text-xs text-slate-500 sm:block">Salary, advance, bata…</span></span>
+  </a>
+  {% endif %}
+  {% if user|can:"record_payment" %}
+  <a href="{% url 'finance:payment_create' %}" class="card flex items-center gap-3 p-4 transition hover:ring-2 hover:ring-brand-300">
+    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white"><i data-lucide="wallet" class="h-5 w-5"></i></span>
+    <span class="min-w-0"><span class="block font-semibold text-navy-800">Record payment</span><span class="hidden text-xs text-slate-500 sm:block">Money received from customer</span></span>
+  </a>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if user.is_admin and pending_approvals_count %}
+<a href="{% url 'finance:approvals' %}" class="no-print mb-6 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 hover:bg-amber-100">
+  <i data-lucide="clock" class="h-5 w-5 text-amber-600"></i>
+  <span class="flex-1"><strong>{{ pending_approvals_count }}</strong> transaction{{ pending_approvals_count|pluralize }} awaiting your approval ({{ pending.income }} income, {{ pending.expense }} expense, {{ pending.payment }} payment). Pending items are not included in the figures below.</span>
+  <i data-lucide="arrow-right" class="h-4 w-4"></i>
+</a>
+{% endif %}
+
+<!-- KPIs -->
+<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+  <div class="kpi">
+    <div class="flex items-start justify-between"><p class="kpi-label">Income billed</p><span class="kpi-icon bg-navy-50 text-navy-700"><i data-lucide="file-text"></i></span></div>
+    <p class="kpi-value">{{ business.currency_symbol }}{{ summary.income_total|inr }}</p>
+    <p class="mt-1 text-xs text-slate-500">{{ summary.income_count }} approved entr{{ summary.income_count|pluralize:"y,ies" }} · work invoiced</p>
+  </div>
+  <div class="kpi">
+    <div class="flex items-start justify-between"><p class="kpi-label">Total expenses</p><span class="kpi-icon bg-brand-50 text-brand-600"><i data-lucide="receipt"></i></span></div>
+    <p class="kpi-value">{{ business.currency_symbol }}{{ summary.expense_total|inr }}</p>
+    <p class="mt-1 text-xs text-slate-500">{{ summary.expense_count }} entr{{ summary.expense_count|pluralize:"y,ies" }} · incl. driver expenses</p>
+  </div>
+  <div class="kpi {% if summary.net_profit < 0 %}ring-1 ring-red-200{% endif %}">
+    <div class="absolute inset-x-0 top-0 h-1 {% if summary.net_profit < 0 %}bg-red-500{% else %}bg-brand-500{% endif %}"></div>
+    <div class="flex items-start justify-between"><p class="kpi-label">Net operating profit</p><span class="kpi-icon {% if summary.net_profit < 0 %}bg-red-50 text-red-600{% else %}bg-emerald-50 text-emerald-600{% endif %}"><i data-lucide="{% if summary.net_profit < 0 %}trending-down{% else %}trending-up{% endif %}"></i></span></div>
+    <p class="kpi-value {% if summary.net_profit < 0 %}!text-red-600{% endif %}">{{ business.currency_symbol }}{{ summary.net_profit|inr }}</p>
+    <p class="mt-1 text-xs text-slate-500">Income billed − expenses{% if summary.margin is not None %} · {{ summary.margin }}% margin{% endif %}</p>
+  </div>
+  <div class="kpi">
+    <div class="flex items-start justify-between"><p class="kpi-label">Payments received</p><span class="kpi-icon bg-emerald-50 text-emerald-600"><i data-lucide="wallet"></i></span></div>
+    <p class="kpi-value">{{ business.currency_symbol }}{{ summary.received_total|inr }}</p>
+    <p class="mt-1 text-xs text-slate-500">Money actually collected{% if summary.collection_rate is not None %} · {{ summary.collection_rate }}% of billed{% endif %}</p>
+  </div>
+  <a href="{% url 'customers:outstanding' %}" class="kpi block transition hover:ring-2 hover:ring-brand-200">
+    <div class="flex items-start justify-between"><p class="kpi-label">Customer outstanding</p><span class="kpi-icon bg-amber-50 text-amber-600"><i data-lucide="hourglass"></i></span></div>
+    <p class="kpi-value">{{ business.currency_symbol }}{{ summary.outstanding_total|inr }}</p>
+    <p class="mt-1 text-xs text-slate-500">Due from customers{% if period.end %} as of {{ period.end|date:"d M Y" }}{% endif %}</p>
+  </a>
+</div>
+
+<!-- Category split -->
+<div class="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+  {% for key, c in summary.categories.items %}
+  <a href="{% if key == 'JCB' %}{% url 'fleet:jcb' %}{% else %}{% url 'fleet:tractors' %}{% endif %}" class="card block p-5 transition hover:ring-2 hover:ring-brand-200">
+    <div class="flex items-center gap-3">
+      <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-navy-800 text-brand-500"><i data-lucide="{% if key == 'JCB' %}construction{% else %}tractor{% endif %}" class="h-5 w-5"></i></span>
+      <div><p class="text-sm font-bold uppercase tracking-wider text-navy-800">{{ c.label }}</p><p class="text-xs text-slate-500">Income vs expenses</p></div>
+    </div>
+    <dl class="mt-4 grid grid-cols-3 gap-2 text-sm">
+      <div><dt class="text-xs text-slate-500">Income</dt><dd class="font-semibold tabular text-navy-800">{{ c.income|inr0 }}</dd></div>
+      <div><dt class="text-xs text-slate-500">Expenses</dt><dd class="font-semibold tabular text-brand-600">{{ c.expense|inr0 }}</dd></div>
+      <div><dt class="text-xs text-slate-500">Profit</dt><dd class="font-semibold tabular {% if c.profit < 0 %}text-red-600{% else %}text-emerald-700{% endif %}">{{ c.profit|inr0 }}</dd></div>
+    </dl>
+  </a>
+  {% endfor %}
+  <div class="card p-5">
+    <div class="flex items-center gap-3">
+      <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600"><i data-lucide="building" class="h-5 w-5"></i></span>
+      <div><p class="text-sm font-bold uppercase tracking-wider text-navy-800">General overheads</p><p class="text-xs text-slate-500">Expenses not tied to a vehicle</p></div>
+    </div>
+    <p class="mt-4 text-xl font-bold tabular text-navy-800">{{ business.currency_symbol }}{{ summary.general_expense|inr }}</p>
+  </div>
+  <a href="{% url 'finance:driver_expense_list' %}" class="card block p-5 transition hover:ring-2 hover:ring-brand-200">
+    <div class="flex items-center gap-3">
+      <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600"><i data-lucide="hard-hat" class="h-5 w-5"></i></span>
+      <div><p class="text-sm font-bold uppercase tracking-wider text-navy-800">Driver expenses</p><p class="text-xs text-slate-500">Already included in total expenses</p></div>
+    </div>
+    <p class="mt-4 text-xl font-bold tabular text-navy-800">{{ business.currency_symbol }}{{ summary.driver_expense_total|inr }}</p>
+  </a>
+</div>
+
+<!-- Charts -->
+<div class="mt-6 grid gap-6 xl:grid-cols-3">
+  <div class="card xl:col-span-2">
+    <div class="card-header"><h2 class="card-title">Monthly income, expenses &amp; collections</h2></div>
+    <div class="card-body"><div class="h-72"><canvas id="trendChart" aria-label="Monthly trend chart"></canvas></div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Expenses by category</h2></div>
+    <div class="card-body"><div class="h-72"><canvas id="expenseChart" aria-label="Expense breakdown chart"></canvas></div></div>
+  </div>
+</div>
+
+<div class="mt-6 grid gap-6 xl:grid-cols-3">
+  <div class="card xl:col-span-2">
+    <div class="card-header">
+      <h2 class="card-title">Vehicle-wise profitability</h2>
+      <a href="{% url 'reports:profitability' %}?{{ period.querystring }}" class="text-sm font-semibold text-brand-600 hover:text-brand-700">Full report →</a>
+    </div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>Vehicle</th><th class="num">Income</th><th class="num">Expenses</th><th class="num">Profit</th><th class="num">Margin</th></tr></thead>
+        <tbody>
+        {% for r in profit_rows %}
+          <tr>
+            <td><a href="{% url 'fleet:vehicle_detail' r.vehicle.pk %}" class="font-semibold text-navy-800 hover:text-brand-600">{{ r.vehicle.display_name }}</a><div class="text-xs text-slate-500">{{ r.vehicle.get_category_display }} · {{ r.vehicle.registration_number }}</div></td>
+            <td class="num">{{ r.income|inr }}</td>
+            <td class="num">{{ r.expense|inr }}</td>
+            <td class="num font-semibold {% if r.profit < 0 %}money-neg{% else %}money-pos{% endif %}">{{ r.profit|inr }}</td>
+            <td class="num">{% if r.margin is not None %}{{ r.margin }}%{% else %}—{% endif %}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="py-10 text-center text-slate-500">No vehicles registered yet. <a href="{% url 'fleet:vehicle_create' %}" class="font-semibold text-brand-600">Add a vehicle</a>.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">JCB vs Tractor</h2></div>
+    <div class="card-body"><div class="h-64"><canvas id="categoryChart" aria-label="JCB vs tractor chart"></canvas></div></div>
+  </div>
+</div>
+
+<div class="mt-6 grid gap-6 xl:grid-cols-3">
+  <div class="card xl:col-span-2">
+    <div class="card-header"><h2 class="card-title">Recent transactions</h2><span class="text-xs text-slate-500">All statuses</span></div>
+    {% include "partials/recent_list.html" %}
+  </div>
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Top driver expenses</h2><a href="{% url 'reports:driver_expenses' %}?{{ period.querystring }}" class="text-sm font-semibold text-brand-600">Report →</a></div>
+    <ul class="divide-y divide-slate-100">
+      {% for r in driver_rows %}
+      <li class="flex items-center justify-between px-5 py-3 text-sm">
+        <a href="{% url 'fleet:driver_detail' r.driver.pk %}" class="font-medium text-navy-800 hover:text-brand-600">{{ r.driver.name }}</a>
+        <span class="font-semibold tabular">{{ business.currency_symbol }}{{ r.total|inr }}</span>
+      </li>
+      {% empty %}
+      <li class="px-5 py-10 text-center text-sm text-slate-500">No approved driver expenses in this period.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+{{ trend|json_script:"trend-data" }}
+{{ expense_chart|json_script:"expense-data" }}
+{{ category_chart|json_script:"category-data" }}
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'vendor/chart.umd.min.js' %}"></script>
+<script src="{% static 'js/charts.js' %}"></script>
+{% endblock %}

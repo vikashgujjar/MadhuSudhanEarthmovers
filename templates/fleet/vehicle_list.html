@@ -1,0 +1,24 @@
+{% extends "layouts/app.html" %}
+{% load erp %}
+{% block title %}Vehicles{% endblock %}
+{% block header_title %}All Vehicles{% endblock %}
+{% block content %}
+<div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+  <div><h1 class="page-title">All vehicles</h1><p class="page-subtitle">Every JCB and tractor registered with {{ business.business_name }}.</p></div>
+  <div class="flex flex-wrap gap-2">
+    {% include "partials/export_buttons.html" %}
+    {% if user|can:"manage_masters" %}<a href="{% url 'fleet:vehicle_create' %}" class="btn-primary"><i data-lucide="plus"></i> Add vehicle</a>{% endif %}
+  </div>
+</div>
+<div class="card">
+  <form method="get" class="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row">
+    <input type="search" name="q" value="{{ request.GET.q }}" placeholder="Registration, name, make…" class="form-input sm:max-w-xs">
+    <select name="category" class="form-input sm:w-40"><option value="">All categories</option>{% for v, l in categories %}<option value="{{ v }}" {% if request.GET.category == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+    <select name="status" class="form-input sm:w-48"><option value="">Any status</option>{% for v, l in statuses %}<option value="{{ v }}" {% if request.GET.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+    <button class="btn-navy"><i data-lucide="search"></i> Filter</button>
+    {% if request.GET %}<a href="{% url 'fleet:vehicle_list' %}" class="btn-ghost">Clear</a>{% endif %}
+  </form>
+  {% include "fleet/_vehicle_table.html" %}
+  {% include "partials/pagination.html" %}
+</div>
+{% endblock %}

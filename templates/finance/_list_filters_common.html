@@ -1,0 +1,4 @@
+{# Search + period + status fields shared by transaction registers (inside a GET form). #}
+<input type="search" name="q" value="{{ request.GET.q }}" placeholder="{{ placeholder|default:'Search…' }}" class="form-input lg:col-span-2">
+{% include "partials/period_fields.html" %}
+<select name="status" class="form-input"><option value="">All statuses</option>{% for v, l in statuses %}<option value="{{ v }}" {% if request.GET.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>

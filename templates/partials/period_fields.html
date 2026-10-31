@@ -1,0 +1,6 @@
+{# Period selector fields (place inside a GET form). #}
+<select name="period" class="form-input sm:w-48" data-period-select {% if autosubmit %}data-autosubmit{% endif %} aria-label="Period">
+  {% for value, label in period_choices %}<option value="{{ value }}" {% if period.key == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+</select>
+<input type="date" name="from" value="{{ period.start|date:'Y-m-d' }}" class="form-input sm:w-40 {% if period.key != 'custom' %}hidden{% endif %}" data-period-custom aria-label="From date">
+<input type="date" name="to" value="{{ period.end|date:'Y-m-d' }}" class="form-input sm:w-40 {% if period.key != 'custom' %}hidden{% endif %}" data-period-custom aria-label="To date">

@@ -1,0 +1,22 @@
+{% load erp %}
+<ul class="divide-y divide-slate-100">
+  {% for t in recent %}
+  <li>
+    <a href="{{ t.url }}" class="flex items-center gap-4 px-5 py-3 hover:bg-slate-50">
+      <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl {% if t.kind == 'Expense' %}bg-brand-50 text-brand-600{% elif t.kind == 'Payment' %}bg-emerald-50 text-emerald-600{% else %}bg-navy-50 text-navy-700{% endif %}">
+        <i data-lucide="{% if t.kind == 'Expense' %}arrow-up-right{% elif t.kind == 'Payment' %}wallet{% else %}arrow-down-left{% endif %}" class="h-5 w-5"></i>
+      </span>
+      <div class="min-w-0 flex-1">
+        <p class="truncate text-sm font-semibold text-navy-800">{{ t.title }}</p>
+        <p class="truncate text-xs text-slate-500">{{ t.kind }} · {{ t.obj.number }} · {{ t.subtitle }} · {{ t.date|date:"d M Y" }}</p>
+      </div>
+      <div class="text-right">
+        <p class="text-sm font-bold tabular {% if t.sign < 0 %}text-brand-600{% else %}text-navy-800{% endif %}">{% if t.sign < 0 %}−{% endif %}{{ business.currency_symbol }}{{ t.amount|inr }}</p>
+        <span class="{{ t.obj.status|status_badge }}">{{ t.obj.get_status_display }}</span>
+      </div>
+    </a>
+  </li>
+  {% empty %}
+  <li class="px-5 py-12 text-center text-sm text-slate-500">No transactions recorded yet.</li>
+  {% endfor %}
+</ul>

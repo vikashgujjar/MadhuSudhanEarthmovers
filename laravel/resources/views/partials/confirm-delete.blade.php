@@ -1,0 +1,20 @@
+@extends('layouts.app')
+@section('title', 'Confirm delete')
+@section('content')
+<div class="mx-auto max-w-lg">
+  <div class="card overflow-hidden">
+    <div class="h-1.5 bg-red-500"></div>
+    <div class="card-body text-center">
+      <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-600"><i data-lucide="trash-2" class="h-7 w-7"></i></div>
+      <h1 class="mt-4 text-lg font-bold text-navy-800">Delete this record?</h1>
+      <p class="mt-2 text-sm text-slate-600"><strong>{{ $label }}</strong></p>
+      <p class="mt-3 text-sm text-slate-500">This cannot be undone. A full copy of the record will be kept in the audit log. Records that other transactions depend on cannot be deleted.</p>
+      <form method="post" class="mt-6 flex justify-center gap-3">
+        @csrf
+        <a href="{{ $cancel }}" class="btn-secondary">Cancel</a>
+        <button class="btn-danger"><i data-lucide="trash-2"></i> Delete permanently</button>
+      </form>
+    </div>
+  </div>
+</div>
+@endsection

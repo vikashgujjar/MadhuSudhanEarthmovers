@@ -1,0 +1,5 @@
+@extends('errors.layout')
+@section('title', 'Maintenance')
+@section('code', '503')
+@section('heading', 'Back shortly')
+@section('message', 'The ERP is being updated. Please try again in a few minutes.')

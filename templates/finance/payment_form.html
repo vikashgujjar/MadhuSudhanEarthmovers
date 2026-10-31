@@ -1,0 +1,34 @@
+{% extends "layouts/app.html" %}
+{% block title %}{% if object %}Edit payment{% else %}Record payment{% endif %}{% endblock %}
+{% block header_title %}Payment Tracking{% endblock %}
+{% block content %}
+{% if object %}{% include "partials/page_header.html" with title="Edit payment" subtitle=object.number icon="wallet" %}
+{% else %}{% include "partials/page_header.html" with title="Record payment" subtitle="Money received from a customer — full, partial or advance." icon="wallet" %}{% endif %}
+<form method="post" data-payment-form class="grid gap-6 xl:grid-cols-3" novalidate>
+  {% csrf_token %}
+  <div class="xl:col-span-3">{% include "partials/form_errors.html" %}</div>
+  <div class="card xl:col-span-2">
+    <div class="card-body grid gap-5 sm:grid-cols-2">
+      {% include "partials/field.html" with field=form.customer %}
+      <div>
+        {% include "partials/field.html" with field=form.income %}
+        <p class="form-help font-medium text-navy-700" data-due-hint></p>
+      </div>
+      {% include "partials/field.html" with field=form.amount %}
+      {% include "partials/field.html" with field=form.date %}
+      {% include "partials/field.html" with field=form.mode %}
+      {% include "partials/field.html" with field=form.reference %}
+      <div class="sm:col-span-2">{% include "partials/field.html" with field=form.notes %}</div>
+    </div>
+  </div>
+  <div class="space-y-4">
+    <div class="card card-body text-xs leading-relaxed text-slate-600">
+      <p class="form-section mb-2">Partial payments</p>
+      Record each instalment separately against the same invoice. The invoice balance and the customer's outstanding update automatically once approved. A payment can never exceed the invoice's remaining balance; use "Advance / on-account" for money received before billing.
+    </div>
+    {% if not user.is_admin and business.require_approval %}<p class="rounded-lg bg-navy-50 px-4 py-3 text-xs text-navy-700"><i data-lucide="info" class="mr-1 inline h-3.5 w-3.5"></i> This payment will be sent to an administrator for approval.</p>{% endif %}
+    <button class="btn-primary w-full"><i data-lucide="save"></i> Save payment</button>
+    <a href="{% if object %}{% url 'finance:payment_detail' object.pk %}{% else %}{% url 'finance:payment_list' %}{% endif %}" class="btn-ghost w-full">Cancel</a>
+  </div>
+</form>
+{% endblock %}

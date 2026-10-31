@@ -1,0 +1,64 @@
+{% extends "layouts/app.html" %}
+{% load erp %}
+{% block title %}{% if object %}Edit income{% else %}Add income{% endif %}{% endblock %}
+{% block header_title %}Income Management{% endblock %}
+{% block content %}
+{% if object %}{% include "partials/page_header.html" with title="Edit income" subtitle=object.number icon="trending-up" %}
+{% else %}{% include "partials/page_header.html" with title="Add income" subtitle="Select the vehicle category first, then the machine that did the work." icon="trending-up" %}{% endif %}
+
+<form method="post" data-income-form class="grid gap-6 xl:grid-cols-3" novalidate>
+  {% csrf_token %}
+  <div class="xl:col-span-3">{% include "partials/form_errors.html" %}</div>
+  <div class="space-y-6 xl:col-span-2">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title"><span class="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-brand-500 text-xs font-bold text-white">1</span>Vehicle &amp; customer</h2></div>
+      <div class="card-body grid gap-5 sm:grid-cols-2">
+        {% include "partials/field.html" with field=form.vehicle_category %}
+        {% include "partials/field.html" with field=form.vehicle %}
+        <div>
+          {% include "partials/field.html" with field=form.customer %}
+          {% if user|can:"manage_masters" %}<a href="{% url 'customers:create' %}?next={{ request.path|urlencode }}" class="mt-1 inline-block text-xs font-semibold text-brand-600">+ New customer</a>{% endif %}
+        </div>
+        {% include "partials/field.html" with field=form.driver %}
+        {% include "partials/field.html" with field=form.date %}
+        {% include "partials/field.html" with field=form.work_location %}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2 class="card-title"><span class="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-brand-500 text-xs font-bold text-white">2</span>Billing</h2></div>
+      <div class="card-body grid gap-5 sm:grid-cols-2">
+        <div class="sm:col-span-2">{% include "partials/field.html" with field=form.billing_type %}</div>
+        {% include "partials/field.html" with field=form.quantity show_when="#id_billing_type" show_values="HOURLY,DAILY" %}
+        {% include "partials/field.html" with field=form.rate show_when="#id_billing_type" show_values="HOURLY,DAILY" %}
+        <div class="sm:col-span-2">{% include "partials/field.html" with field=form.amount %}</div>
+        <div class="sm:col-span-2">{% include "partials/field.html" with field=form.description %}</div>
+      </div>
+    </div>
+  </div>
+  <div class="space-y-6">
+    <div class="card overflow-hidden">
+      <div class="bg-navy-800 px-5 py-4 text-white">
+        <p class="text-xs font-semibold uppercase tracking-wider text-navy-200">Billed amount</p>
+        <p class="mt-1 text-3xl font-bold tabular" data-amount-preview>₹ 0.00</p>
+      </div>
+      {% if form.received_now %}
+      <div class="card-body space-y-4">
+        <p class="form-section">Payment received now</p>
+        {% include "partials/field.html" with field=form.received_now %}
+        {% include "partials/field.html" with field=form.payment_mode %}
+        {% include "partials/field.html" with field=form.payment_reference %}
+        <div class="flex items-center justify-between rounded-lg bg-amber-50 px-3 py-2 text-sm"><span class="text-amber-800">Balance to collect</span><span class="font-bold tabular text-amber-800" data-balance-preview>₹ 0.00</span></div>
+      </div>
+      {% else %}
+      <div class="card-body text-sm text-slate-500">Payments for this invoice are managed on the invoice page.</div>
+      {% endif %}
+    </div>
+    {% if not user.is_admin and business.require_approval %}<p class="rounded-lg bg-navy-50 px-4 py-3 text-xs text-navy-700"><i data-lucide="info" class="mr-1 inline h-3.5 w-3.5"></i> This entry will be sent to an administrator for approval.</p>{% endif %}
+    <div class="flex flex-col gap-2">
+      <button class="btn-primary w-full"><i data-lucide="save"></i> Save income</button>
+      {% if not object %}<button name="save_and_add" value="1" class="btn-secondary w-full"><i data-lucide="copy-plus"></i> Save &amp; add another</button>{% endif %}
+      <a href="{% if object %}{% url 'finance:income_detail' object.pk %}{% else %}{% url 'finance:income_list' %}{% endif %}" class="btn-ghost w-full">Cancel</a>
+    </div>
+  </div>
+</form>
+{% endblock %}

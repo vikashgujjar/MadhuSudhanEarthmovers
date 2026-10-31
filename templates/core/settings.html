@@ -1,0 +1,53 @@
+{% extends "layouts/app.html" %}
+{% block title %}Business Settings{% endblock %}
+{% block header_title %}Business Settings{% endblock %}
+{% block content %}
+{% include "partials/page_header.html" with title="Business settings" subtitle="Organisation profile used on every screen, report, PDF and Excel export." icon="building-2" %}
+<form method="post" enctype="multipart/form-data" class="grid gap-6 xl:grid-cols-3" novalidate>
+  {% csrf_token %}
+  <div class="xl:col-span-3">{% include "partials/form_errors.html" %}</div>
+  <div class="space-y-6 xl:col-span-2">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Organisation profile</h2></div>
+      <div class="card-body grid gap-5 sm:grid-cols-2">
+        {% include "partials/field.html" with field=form.business_name %}
+        {% include "partials/field.html" with field=form.erp_title %}
+        <div class="sm:col-span-2">{% include "partials/field.html" with field=form.tagline %}</div>
+        {% include "partials/field.html" with field=form.owner_name %}
+        {% include "partials/field.html" with field=form.phone %}
+        {% include "partials/field.html" with field=form.email %}
+        {% include "partials/field.html" with field=form.gstin %}
+        {% include "partials/field.html" with field=form.pan %}
+        <div class="sm:col-span-2">{% include "partials/field.html" with field=form.address %}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Accounting &amp; numbering</h2></div>
+      <div class="card-body grid gap-5 sm:grid-cols-3">
+        {% include "partials/field.html" with field=form.currency_symbol %}
+        {% include "partials/field.html" with field=form.financial_year_start_month %}
+        {% include "partials/field.html" with field=form.opening_cash_balance %}
+        {% include "partials/field.html" with field=form.invoice_prefix %}
+        {% include "partials/field.html" with field=form.receipt_prefix %}
+        {% include "partials/field.html" with field=form.expense_prefix %}
+        <div class="sm:col-span-3">{% include "partials/field.html" with field=form.require_approval %}</div>
+        <div class="sm:col-span-3">{% include "partials/field.html" with field=form.report_footer %}</div>
+      </div>
+    </div>
+  </div>
+  <div class="space-y-6">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Logo &amp; brand preview</h2></div>
+      <div class="card-body space-y-5">
+        <div class="rounded-xl bg-navy-800 p-5">{% include "partials/logo.html" with dark=True %}</div>
+        <div class="rounded-xl border border-slate-200 p-5">{% include "partials/logo.html" %}</div>
+        {% include "partials/field.html" with field=form.logo %}
+        <p class="form-help">PNG, JPG or WebP image, ideally square, under 2 MB. Without an upload, the built-in earthmover emblem is used.</p>
+      </div>
+    </div>
+    <div class="flex gap-3">
+      <button class="btn-primary flex-1"><i data-lucide="save"></i> Save settings</button>
+    </div>
+  </div>
+</form>
+{% endblock %}

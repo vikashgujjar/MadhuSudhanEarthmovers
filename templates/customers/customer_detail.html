@@ -1,0 +1,103 @@
+{% extends "layouts/app.html" %}
+{% load erp %}
+{% block title %}{{ customer.name }}{% endblock %}
+{% block header_title %}Customer statement{% endblock %}
+{% block content %}
+<div class="no-print mb-4"><a href="{% url 'customers:list' %}" class="text-sm font-semibold text-brand-600">← Customers</a></div>
+<div class="mb-6 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+  <div class="flex items-center gap-4">
+    <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-navy-800 text-xl font-bold text-brand-500">{{ customer.name|slice:":1"|upper }}</div>
+    <div><h1 class="page-title">{{ customer.name }}</h1>
+      <p class="page-subtitle">{{ customer.contact_person|default:"" }}{% if customer.phone %} · {{ customer.phone }}{% endif %}{% if customer.gstin %} · GSTIN {{ customer.gstin }}{% endif %}{% if not customer.is_active %} · <span class="badge-slate">Inactive</span>{% endif %}</p></div>
+  </div>
+  <div class="no-print flex flex-wrap gap-2">
+    <button type="button" class="btn-secondary" data-print><i data-lucide="printer"></i> Print statement</button>
+    {% if user|can:"add_income" %}<a href="{% url 'finance:income_create' %}?customer={{ customer.pk }}" class="btn-secondary"><i data-lucide="plus"></i> Income</a>{% endif %}
+    {% if user|can:"record_payment" %}<a href="{% url 'finance:payment_create' %}?customer={{ customer.pk }}" class="btn-primary"><i data-lucide="wallet"></i> Record payment</a>{% endif %}
+    {% if user|can:"manage_masters" %}<a href="{% url 'customers:update' customer.pk %}" class="btn-secondary"><i data-lucide="pencil"></i> Edit</a>{% endif %}
+    {% if user.is_admin %}<a href="{% url 'customers:delete' customer.pk %}" class="btn-ghost text-red-600"><i data-lucide="trash-2"></i></a>{% endif %}
+  </div>
+</div>
+
+{% if show_balances %}
+<div class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+  <div class="kpi"><p class="kpi-label">Opening balance</p><p class="kpi-value">{{ business.currency_symbol }}{{ totals.opening|inr }}</p></div>
+  <div class="kpi"><p class="kpi-label">Total billed</p><p class="kpi-value">{{ business.currency_symbol }}{{ totals.debit|inr }}</p></div>
+  <div class="kpi"><p class="kpi-label">Total received</p><p class="kpi-value !text-emerald-700">{{ business.currency_symbol }}{{ totals.credit|inr }}</p></div>
+  <div class="kpi"><div class="absolute inset-x-0 top-0 h-1 bg-brand-500"></div><p class="kpi-label">{% if totals.closing < 0 %}Advance held{% else %}Outstanding{% endif %}</p><p class="kpi-value {% if totals.closing > 0 %}!text-amber-700{% endif %}">{{ business.currency_symbol }}{{ totals.closing|inr }}</p></div>
+</div>
+
+{% if pending_income or pending_payments %}
+<div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+  <i data-lucide="clock" class="mr-1 inline h-4 w-4"></i> {{ pending_income|length }} invoice{{ pending_income|length|pluralize }} and {{ pending_payments|length }} payment{{ pending_payments|length|pluralize }} for this customer are awaiting approval and are not yet in the balance.
+</div>
+{% endif %}
+
+<div class="grid gap-6 xl:grid-cols-3">
+  <div class="card xl:col-span-2">
+    <div class="card-header"><h2 class="card-title">Account statement</h2><span class="text-xs text-slate-500">Approved entries</span></div>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Date</th><th>No.</th><th>Particulars</th><th class="num">Debit (billed)</th><th class="num">Credit (received)</th><th class="num">Balance</th></tr></thead>
+      <tbody>
+        <tr class="bg-slate-50/60"><td colspan="5" class="font-medium text-slate-600">Opening balance</td><td class="num font-semibold">{{ totals.opening|inr }}</td></tr>
+        {% for l in statement %}
+        <tr>
+          <td>{{ l.date|date:"d M Y" }}</td>
+          <td>{% if l.obj|visible:user %}<a href="{{ l.url }}" class="font-semibold text-navy-800 hover:text-brand-600">{{ l.number }}</a>{% else %}<span class="font-semibold text-navy-800">{{ l.number }}</span>{% endif %}</td>
+          <td class="max-w-xs whitespace-normal"><span class="{% if l.kind == 'Invoice' %}badge-navy{% else %}badge-green{% endif %}">{{ l.kind }}</span> <span class="text-slate-600">{{ l.particulars }}</span></td>
+          <td class="num">{% if l.debit %}{{ l.debit|inr }}{% endif %}</td>
+          <td class="num text-emerald-700">{% if l.credit %}{{ l.credit|inr }}{% endif %}</td>
+          <td class="num font-semibold">{{ l.balance|inr }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="py-10 text-center text-slate-500">No approved invoices or payments yet.</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot><tr><td colspan="3">Closing balance</td><td class="num">{{ totals.debit|inr }}</td><td class="num">{{ totals.credit|inr }}</td><td class="num">{{ totals.closing|inr }}</td></tr></tfoot>
+    </table></div>
+  </div>
+  <div class="space-y-6">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Unpaid invoices</h2></div>
+      <ul class="divide-y divide-slate-100">
+        {% for inv in open_invoices %}
+        <li class="flex items-center justify-between gap-3 px-5 py-3 text-sm">
+          <div>{% if inv|visible:user %}<a href="{% url 'finance:income_detail' inv.pk %}" class="font-semibold text-navy-800 hover:text-brand-600">{{ inv.number }}</a>{% else %}<span class="font-semibold text-navy-800">{{ inv.number }}</span>{% endif %}<div class="text-xs text-slate-500">{{ inv.date|date:"d M Y" }} · billed {{ inv.amount|inr0 }} · {{ inv.payment_state }}</div></div>
+          <div class="text-right"><div class="font-bold tabular text-amber-700">{{ inv.outstanding|inr }}</div>
+            {% if user|can:"record_payment" %}<a href="{% url 'finance:payment_create' %}?customer={{ customer.pk }}&income={{ inv.pk }}" class="no-print text-xs font-semibold text-brand-600">Receive →</a>{% endif %}</div>
+        </li>
+        {% empty %}
+        <li class="px-5 py-8 text-center text-sm text-slate-500">No unpaid invoices.</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Contact</h2></div>
+      <dl class="divide-y divide-slate-100 text-sm">
+        <div class="flex justify-between px-5 py-2.5"><dt class="text-slate-500">Email</dt><dd>{{ customer.email|default:"—" }}</dd></div>
+        <div class="px-5 py-2.5"><dt class="text-slate-500">Address</dt><dd class="mt-1 whitespace-pre-line">{{ customer.address|default:"—" }}</dd></div>
+        {% if customer.notes %}<div class="px-5 py-2.5"><dt class="text-slate-500">Notes</dt><dd class="mt-1 whitespace-pre-line">{{ customer.notes }}</dd></div>{% endif %}
+      </dl>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="grid gap-6 xl:grid-cols-3">
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Contact</h2></div>
+    <dl class="divide-y divide-slate-100 text-sm">
+      <div class="flex justify-between px-5 py-2.5"><dt class="text-slate-500">Phone</dt><dd>{{ customer.phone|default:"—" }}</dd></div>
+      <div class="flex justify-between px-5 py-2.5"><dt class="text-slate-500">Email</dt><dd>{{ customer.email|default:"—" }}</dd></div>
+      <div class="px-5 py-2.5"><dt class="text-slate-500">Address</dt><dd class="mt-1 whitespace-pre-line">{{ customer.address|default:"—" }}</dd></div>
+    </dl>
+  </div>
+  <div class="card xl:col-span-2">
+    <div class="card-header"><h2 class="card-title">{% if user.is_viewer %}Recent income{% else %}My income entries for this customer{% endif %}</h2></div>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Date</th><th>No.</th><th>Vehicle</th><th class="num">Amount</th><th>Status</th></tr></thead>
+      <tbody>{% for i in my_income %}<tr><td>{{ i.date|date:"d M Y" }}</td><td><a href="{% url 'finance:income_detail' i.pk %}" class="font-semibold text-navy-800">{{ i.number }}</a></td><td>{{ i.vehicle.display_name }}</td><td class="num">{{ i.amount|inr }}</td><td><span class="{{ i.status|status_badge }}">{{ i.get_status_display }}</span></td></tr>{% empty %}<tr><td colspan="5" class="py-8 text-center text-slate-500">No entries.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

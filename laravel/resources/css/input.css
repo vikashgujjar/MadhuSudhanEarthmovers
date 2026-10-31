@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+  body { @apply bg-surface text-slate-800 antialiased; }
+  [x-cloak] { display: none !important; }
+  /* Grid children may shrink so wide tables scroll inside their card instead of widening the page. */
+  .grid > * { min-width: 0; }
+  dd { overflow-wrap: anywhere; }
+  .tabular { font-variant-numeric: tabular-nums; }
+}
+
+@layer components {
+  /* Buttons */
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 whitespace-nowrap; }
+  .btn svg { @apply h-4 w-4 shrink-0; }
+  .btn-primary { @apply btn bg-brand-500 text-white shadow-sm hover:bg-brand-600; }
+  .btn-navy { @apply btn bg-navy-800 text-white hover:bg-navy-700; }
+  .btn-secondary { @apply btn border border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50; }
+  .btn-ghost { @apply btn text-slate-600 hover:bg-slate-100; }
+  .btn-danger { @apply btn bg-red-600 text-white hover:bg-red-700; }
+  .btn-success { @apply btn bg-emerald-600 text-white hover:bg-emerald-700; }
+  .btn-sm { @apply px-3 py-1.5 text-xs; }
+  .btn-icon { @apply inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-navy-800; }
+
+  /* Cards */
+  .card { @apply min-w-0 rounded-2xl border border-slate-200/70 bg-white shadow-card; }
+  .card-header { @apply flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4; }
+  .card-title { @apply text-base font-semibold text-navy-800; }
+  .card-body { @apply p-5; }
+
+  .kpi { @apply card relative overflow-hidden p-5; }
+  .kpi-label { @apply text-xs font-semibold uppercase tracking-wider text-slate-500; }
+  .kpi-value { @apply mt-2 break-words text-2xl font-bold leading-tight text-navy-800 tabular xl:text-xl 2xl:text-2xl; }
+  .kpi-icon { @apply flex h-11 w-11 items-center justify-center rounded-xl; }
+  .kpi-icon svg { @apply h-5 w-5; }
+
+  /* Forms */
+  .form-label { @apply mb-1.5 block text-sm font-medium text-slate-700; }
+  .form-input { @apply block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:bg-slate-100 disabled:text-slate-500; }
+  .form-input.is-invalid { @apply border-red-500 focus:border-red-500 focus:ring-red-500/20; }
+  .form-check { @apply h-4 w-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500; }
+  .form-help { @apply mt-1 text-xs text-slate-500; }
+  .form-error { @apply mt-1 flex items-center gap-1 text-xs font-medium text-red-600; }
+  .form-section { @apply text-xs font-bold uppercase tracking-wider text-brand-600; }
+
+  /* Tables */
+  .tbl-wrap { @apply overflow-x-auto; }
+  .tbl { @apply min-w-full divide-y divide-slate-100 text-sm; }
+  .tbl thead th { @apply whitespace-nowrap bg-slate-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500; }
+  .tbl tbody td { @apply whitespace-nowrap px-4 py-3 text-slate-700; }
+  .tbl tbody tr { @apply hover:bg-slate-50/70; }
+  .tbl tfoot td { @apply whitespace-nowrap border-t-2 border-slate-200 bg-slate-50 px-4 py-3 font-semibold text-navy-800; }
+  .num { @apply text-right tabular; }
+  .tbl thead th.num { @apply text-right; }
+
+  /* Badges */
+  .badge { @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold; }
+  .badge-green { @apply badge bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20; }
+  .badge-amber { @apply badge bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20; }
+  .badge-red { @apply badge bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20; }
+  .badge-slate { @apply badge bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-500/20; }
+  .badge-navy { @apply badge bg-navy-50 text-navy-700 ring-1 ring-inset ring-navy-600/20; }
+  .badge-orange { @apply badge bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-600/20; }
+
+  /* Navigation */
+  .nav-section { @apply px-3 pb-1 pt-5 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-navy-300/70; }
+  .nav-link { @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-navy-100/80 transition hover:bg-white/5 hover:text-white; }
+  .nav-link svg { @apply h-[18px] w-[18px] shrink-0 opacity-80; }
+  .nav-link.active { @apply bg-brand-500 text-white shadow-lg shadow-brand-500/20; }
+  .nav-link.active svg { @apply opacity-100; }
+
+  .page-title { @apply font-display text-2xl font-bold uppercase tracking-wide text-navy-800 sm:text-3xl; }
+  .page-subtitle { @apply mt-1 text-sm text-slate-500; }
+  .money-pos { @apply text-emerald-700; }
+  .money-neg { @apply text-red-600; }
+  .stripe-accent { background-image: repeating-linear-gradient(-45deg, #FF6B00 0 10px, #0B1F33 10px 20px); }
+}
+
+@media print {
+  .no-print, aside#sidebar, header#topbar { display: none !important; }
+  body { background: #fff !important; }
+  main { padding: 0 !important; margin: 0 !important; }
+  .card { box-shadow: none !important; border-color: #ddd !important; }
+  .print-only { display: block !important; }
+  .tbl tbody td, .tbl thead th { padding: 4px 6px !important; }
+  #app-shell { padding-left: 0 !important; }
+}
+.print-only { display: none; }

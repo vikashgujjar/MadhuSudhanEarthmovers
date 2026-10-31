@@ -1,0 +1,47 @@
+{% extends "layouts/app.html" %}
+{% block title %}{% if object %}Edit user{% else %}Add user{% endif %}{% endblock %}
+{% block header_title %}Users &amp; Permissions{% endblock %}
+{% block content %}
+{% if object %}{% include "partials/page_header.html" with title="Edit user" subtitle=object.username icon="user-cog" %}
+{% else %}{% include "partials/page_header.html" with title="Add user" subtitle="Create a login for a staff member." icon="user-plus" %}{% endif %}
+
+<form method="post" class="grid gap-6 xl:grid-cols-3" novalidate>
+  {% csrf_token %}
+  <div class="xl:col-span-3">{% include "partials/form_errors.html" %}</div>
+  <div class="card xl:col-span-2">
+    <div class="card-header"><h2 class="card-title">Account details</h2></div>
+    <div class="card-body grid gap-5 sm:grid-cols-2">
+      {% include "partials/field.html" with field=form.username %}
+      {% include "partials/field.html" with field=form.role %}
+      {% include "partials/field.html" with field=form.first_name %}
+      {% include "partials/field.html" with field=form.last_name %}
+      {% include "partials/field.html" with field=form.email %}
+      {% include "partials/field.html" with field=form.phone %}
+      {% if form.password1 %}
+        {% include "partials/field.html" with field=form.password1 %}
+        {% include "partials/field.html" with field=form.password2 %}
+      {% endif %}
+      {% if form.is_active %}<div class="sm:col-span-2">{% include "partials/field.html" with field=form.is_active %}</div>{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Permissions</h2></div>
+    <div class="card-body space-y-3">
+      <div class="rounded-lg bg-navy-50 p-3 text-xs leading-relaxed text-navy-700">
+        <strong>Admin</strong>: every permission, always. <strong>Viewer</strong>: can never add or change data; only the reporting/export permissions apply. <strong>Entry user</strong>: only what is ticked below. All permissions are enforced on the server.
+      </div>
+      {% include "partials/field.html" with field=form.can_add_income %}
+      {% include "partials/field.html" with field=form.can_add_expense %}
+      {% include "partials/field.html" with field=form.can_add_driver_expense %}
+      {% include "partials/field.html" with field=form.can_record_payment %}
+      {% include "partials/field.html" with field=form.can_manage_masters %}
+      {% include "partials/field.html" with field=form.can_view_reports %}
+      {% include "partials/field.html" with field=form.can_export_reports %}
+    </div>
+  </div>
+  <div class="flex justify-end gap-3 xl:col-span-3">
+    <a href="{% url 'accounts:user_list' %}" class="btn-secondary">Cancel</a>
+    <button type="submit" class="btn-primary"><i data-lucide="save"></i> Save user</button>
+  </div>
+</form>
+{% endblock %}

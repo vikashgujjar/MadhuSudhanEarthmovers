@@ -1,0 +1,52 @@
+{% extends "layouts/app.html" %}
+{% load erp %}
+{% block title %}{{ category_label }} Management{% endblock %}
+{% block header_title %}{{ category_label }} Management{% endblock %}
+{% block content %}
+<div class="mb-6 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+  <div class="flex items-center gap-4">
+    <div class="hidden h-14 w-14 items-center justify-center rounded-2xl bg-navy-800 text-brand-500 shadow-card sm:flex"><i data-lucide="{% if category == 'JCB' %}construction{% else %}tractor{% endif %}" class="h-7 w-7"></i></div>
+    <div><h1 class="page-title">{{ category_label }} management</h1><p class="page-subtitle">{{ category_label }} fleet, rates and performance{% if period %} · {{ period.label }}{% endif %}</p></div>
+  </div>
+  <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+    {% if period %}
+    <form method="get" class="no-print flex flex-col gap-2 sm:flex-row">
+      {% include "partials/period_fields.html" with autosubmit=True %}
+      <button class="btn-navy {% if period.key != 'custom' %}hidden{% endif %}" data-period-custom>Apply</button>
+    </form>
+    {% endif %}
+    {% include "partials/export_buttons.html" %}
+    {% if user|can:"manage_masters" %}<a href="{% url 'fleet:vehicle_create' %}?category={{ category }}" class="btn-primary"><i data-lucide="plus"></i> Add {{ category_label }}</a>{% endif %}
+  </div>
+</div>
+
+<div class="mb-6 grid gap-4 sm:grid-cols-3 {% if cat_totals %}xl:grid-cols-6{% endif %}">
+  <div class="kpi"><p class="kpi-label">Registered</p><p class="kpi-value">{{ counts.total }}</p></div>
+  <div class="kpi"><p class="kpi-label">Active</p><p class="kpi-value text-emerald-700">{{ counts.active }}</p></div>
+  <div class="kpi"><p class="kpi-label">Under maintenance</p><p class="kpi-value text-amber-600">{{ counts.maintenance }}</p></div>
+  {% if cat_totals %}
+  <div class="kpi"><p class="kpi-label">Income billed</p><p class="kpi-value">{{ business.currency_symbol }}{{ cat_totals.income|inr0 }}</p></div>
+  <div class="kpi"><p class="kpi-label">Expenses</p><p class="kpi-value">{{ business.currency_symbol }}{{ cat_totals.expense|inr0 }}</p></div>
+  <div class="kpi"><p class="kpi-label">Profit</p><p class="kpi-value {% if cat_totals.profit < 0 %}!text-red-600{% else %}!text-emerald-700{% endif %}">{{ business.currency_symbol }}{{ cat_totals.profit|inr0 }}</p></div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <form method="get" class="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row">
+    {% if period %}<input type="hidden" name="period" value="{{ period.key }}">{% if period.key == 'custom' %}<input type="hidden" name="from" value="{{ period.start|date:'Y-m-d' }}"><input type="hidden" name="to" value="{{ period.end|date:'Y-m-d' }}">{% endif %}{% endif %}
+    <input type="search" name="q" value="{{ request.GET.q }}" placeholder="Search {{ category_label }} registration, name…" class="form-input sm:max-w-xs">
+    <select name="status" class="form-input sm:w-48"><option value="">Any status</option>{% for v, l in statuses %}<option value="{{ v }}" {% if request.GET.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+    <button class="btn-navy"><i data-lucide="search"></i> Filter</button>
+  </form>
+  {% include "fleet/_vehicle_table.html" %}
+  {% include "partials/pagination.html" %}
+</div>
+{% if user|can:"add_income" or user|can:"add_expense" %}
+<div class="no-print mt-6 flex flex-wrap gap-3">
+  {% if user|can:"add_income" %}<a href="{% url 'finance:income_create' %}?vehicle_category={{ category }}" class="btn-navy"><i data-lucide="trending-up"></i> Record {{ category_label }} income</a>{% endif %}
+  {% if user|can:"add_expense" %}<a href="{% url 'finance:expense_create' %}?vehicle_category={{ category }}" class="btn-secondary"><i data-lucide="receipt"></i> Record {{ category_label }} expense</a>{% endif %}
+  <a href="{% url 'finance:income_list' %}?vehicle_category={{ category }}" class="btn-ghost">View {{ category_label }} income →</a>
+  <a href="{% url 'finance:expense_list' %}?vehicle_category={{ category }}" class="btn-ghost">View {{ category_label }} expenses →</a>
+</div>
+{% endif %}
+{% endblock %}

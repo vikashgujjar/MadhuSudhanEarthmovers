@@ -1,0 +1,37 @@
+{% extends "layouts/app.html" %}
+{% block title %}{% if object %}Edit driver{% else %}Add driver{% endif %}{% endblock %}
+{% block header_title %}Drivers{% endblock %}
+{% block content %}
+{% if object %}{% include "partials/page_header.html" with title="Edit driver" subtitle=object.name icon="id-card" %}
+{% else %}{% include "partials/page_header.html" with title="Add driver" subtitle="Register an operator and assign a machine." icon="id-card" %}{% endif %}
+<form method="post" class="space-y-6" novalidate>
+  {% csrf_token %}
+  {% include "partials/form_errors.html" %}
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Personal &amp; licence</h2></div>
+    <div class="card-body grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+      {% include "partials/field.html" with field=form.name %}
+      {% include "partials/field.html" with field=form.phone %}
+      {% include "partials/field.html" with field=form.alternate_phone %}
+      {% include "partials/field.html" with field=form.license_number %}
+      {% include "partials/field.html" with field=form.license_expiry %}
+      {% include "partials/field.html" with field=form.status %}
+      <div class="sm:col-span-2 xl:col-span-3">{% include "partials/field.html" with field=form.address %}</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Assignment &amp; pay</h2></div>
+    <div class="card-body grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      {% include "partials/field.html" with field=form.assigned_vehicle %}
+      {% include "partials/field.html" with field=form.joining_date %}
+      {% include "partials/field.html" with field=form.monthly_salary %}
+      {% include "partials/field.html" with field=form.daily_allowance %}
+      <div class="sm:col-span-2 xl:col-span-4">{% include "partials/field.html" with field=form.notes %}</div>
+    </div>
+  </div>
+  <div class="flex justify-end gap-3">
+    <a href="{% if object %}{% url 'fleet:driver_detail' object.pk %}{% else %}{% url 'fleet:driver_list' %}{% endif %}" class="btn-secondary">Cancel</a>
+    <button class="btn-primary"><i data-lucide="save"></i> Save driver</button>
+  </div>
+</form>
+{% endblock %}

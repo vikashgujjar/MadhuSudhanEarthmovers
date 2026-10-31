@@ -1,0 +1,46 @@
+{% extends "layouts/app.html" %}
+{% load erp %}
+{% block title %}Drivers{% endblock %}
+{% block header_title %}Drivers{% endblock %}
+{% block content %}
+<div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+  <div><h1 class="page-title">Drivers</h1><p class="page-subtitle">Operators, assigned machines, salary and allowance details.</p></div>
+  <div class="flex flex-wrap gap-2">
+    {% include "partials/export_buttons.html" %}
+    {% if user|can:"manage_masters" %}<a href="{% url 'fleet:driver_create' %}" class="btn-primary"><i data-lucide="user-plus"></i> Add driver</a>{% endif %}
+  </div>
+</div>
+<div class="card">
+  <form method="get" class="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row">
+    <input type="search" name="q" value="{{ request.GET.q }}" placeholder="Name, phone, licence…" class="form-input sm:max-w-xs">
+    <select name="vehicle" class="form-input sm:w-56"><option value="">Any vehicle</option>{% for v in vehicles %}<option value="{{ v.pk }}" {% if request.GET.vehicle == v.pk|stringformat:'s' %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>
+    <select name="status" class="form-input sm:w-40"><option value="">Any status</option>{% for v, l in statuses %}<option value="{{ v }}" {% if request.GET.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+    <button class="btn-navy"><i data-lucide="search"></i> Filter</button>
+    {% if request.GET %}<a href="{% url 'fleet:driver_list' %}" class="btn-ghost">Clear</a>{% endif %}
+  </form>
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th>Driver</th><th>Licence</th><th>Assigned vehicle</th><th class="num">Monthly salary</th><th class="num">Daily allowance</th><th>Status</th><th class="text-right">Actions</th></tr></thead>
+      <tbody>
+      {% for d in drivers %}
+      <tr>
+        <td><a href="{% url 'fleet:driver_detail' d.pk %}" class="font-semibold text-navy-800 hover:text-brand-600">{{ d.name }}</a><div class="text-xs text-slate-500">{{ d.phone|default:"No phone" }}</div></td>
+        <td>{{ d.license_number|default:"—" }}{% if d.license_expiry %}<div class="text-xs text-slate-500">Expires {{ d.license_expiry|date:"d M Y" }}</div>{% endif %}</td>
+        <td>{% if d.assigned_vehicle %}<a href="{% url 'fleet:vehicle_detail' d.assigned_vehicle.pk %}" class="hover:text-brand-600">{{ d.assigned_vehicle.display_name }}</a>{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
+        <td class="num">{{ d.monthly_salary|inr }}</td>
+        <td class="num">{{ d.daily_allowance|inr }}</td>
+        <td><span class="{{ d.status|status_badge }}">{{ d.get_status_display }}</span></td>
+        <td><div class="flex justify-end gap-1">
+          <a href="{% url 'fleet:driver_detail' d.pk %}" class="btn-ghost btn-sm">View</a>
+          {% if user|can:"manage_masters" %}<a href="{% url 'fleet:driver_update' d.pk %}" class="btn-secondary btn-sm"><i data-lucide="pencil"></i> Edit</a>{% endif %}
+        </div></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="py-12 text-center text-slate-500">No drivers found.{% if user|can:"manage_masters" %} <a href="{% url 'fleet:driver_create' %}" class="font-semibold text-brand-600">Add a driver</a>.{% endif %}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "partials/pagination.html" %}
+</div>
+{% endblock %}

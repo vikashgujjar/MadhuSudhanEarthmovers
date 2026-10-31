@@ -1,0 +1,50 @@
+{% load erp %}
+<aside id="sidebar" class="fixed inset-y-0 left-0 z-40 flex w-72 -translate-x-full flex-col bg-navy-800 transition-transform duration-200 lg:translate-x-0" aria-label="Main navigation">
+  <div class="h-1.5 stripe-accent"></div>
+  <div class="flex items-center justify-between px-5 py-5">
+    <a href="{% url 'core:dashboard' %}" class="min-w-0">{% include "partials/logo.html" with dark=True %}</a>
+    <button type="button" class="rounded-lg p-2 text-navy-200 hover:bg-white/10 lg:hidden" data-sidebar-close aria-label="Close menu"><i data-lucide="x" class="h-5 w-5"></i></button>
+  </div>
+  <nav class="flex-1 overflow-y-auto px-3 pb-6">
+    <a href="{% url 'core:dashboard' %}" class="nav-link {% active '/' exact=True %}"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+
+    <div class="nav-section">Fleet</div>
+    <a href="{% url 'fleet:jcb' %}" class="nav-link {% active '/fleet/jcb/' %}"><i data-lucide="construction"></i> JCB Management</a>
+    <a href="{% url 'fleet:tractors' %}" class="nav-link {% active '/fleet/tractors/' %}"><i data-lucide="tractor"></i> Tractor Management</a>
+    <a href="{% url 'fleet:vehicle_list' %}" class="nav-link {% active '/fleet/vehicles/' %}"><i data-lucide="truck"></i> All Vehicles</a>
+    <a href="{% url 'fleet:driver_list' %}" class="nav-link {% active '/fleet/drivers/' %}"><i data-lucide="id-card"></i> Drivers</a>
+
+    <div class="nav-section">Transactions</div>
+    <a href="{% url 'finance:income_list' %}" class="nav-link {% active '/finance/income/' %}"><i data-lucide="trending-up"></i> Income</a>
+    <a href="{% url 'finance:expense_list' %}" class="nav-link {% active '/finance/expenses/' %}"><i data-lucide="receipt"></i> Expenses</a>
+    <a href="{% url 'finance:driver_expense_list' %}" class="nav-link {% active '/finance/driver-expenses/' %}"><i data-lucide="hard-hat"></i> Driver Expenses</a>
+    <a href="{% url 'finance:payment_list' %}" class="nav-link {% active '/finance/payments/' %}"><i data-lucide="wallet"></i> Payments</a>
+    {% if user.is_admin %}
+    <a href="{% url 'finance:approvals' %}" class="nav-link {% active '/finance/approvals/' %}"><i data-lucide="badge-check"></i> <span class="flex-1">Approvals</span>{% if pending_approvals_count %}<span class="rounded-full bg-white/15 px-2 py-0.5 text-xs font-bold text-white">{{ pending_approvals_count }}</span>{% endif %}</a>
+    {% endif %}
+
+    <div class="nav-section">Customers</div>
+    <a href="{% url 'customers:list' %}" class="nav-link {% active '/customers/' exclude='/customers/outstanding/' %}"><i data-lucide="users"></i> Customers</a>
+    {% if user|can:"view_reports" or user|can:"record_payment" %}
+    <a href="{% url 'customers:outstanding' %}" class="nav-link {% active '/customers/outstanding/' %}"><i data-lucide="hourglass"></i> Outstanding Balances</a>
+    {% endif %}
+
+    {% if user|can:"view_reports" %}
+    <div class="nav-section">Accounts &amp; Reports</div>
+    <a href="{% url 'reports:cashbook' %}" class="nav-link {% active '/reports/cash-book/' %}"><i data-lucide="book-open"></i> Cash Book</a>
+    <a href="{% url 'reports:profitability' %}" class="nav-link {% active '/reports/profitability/' %}"><i data-lucide="bar-chart-3"></i> Vehicle Profitability</a>
+    <a href="{% url 'reports:index' %}" class="nav-link {% active '/reports/' exact=True %}{% active '/reports/pnl/' '/reports/driver-expenses/' '/reports/expense-categories/' %}"><i data-lucide="file-bar-chart"></i> Financial Reports</a>
+    {% endif %}
+
+    {% if user.is_admin %}
+    <div class="nav-section">Administration</div>
+    <a href="{% url 'accounts:user_list' %}" class="nav-link {% active '/accounts/users/' %}"><i data-lucide="shield-check"></i> Users &amp; Permissions</a>
+    <a href="{% url 'core:settings' %}" class="nav-link {% active '/settings/' %}"><i data-lucide="building-2"></i> Business Settings</a>
+    <a href="{% url 'audit:list' %}" class="nav-link {% active '/audit/' %}"><i data-lucide="scroll-text"></i> Audit Logs</a>
+    {% endif %}
+  </nav>
+  <div class="border-t border-white/10 px-5 py-4 text-xs text-navy-200/70">
+    <div class="font-semibold text-navy-100">{{ business.erp_title }}</div>
+    <div class="truncate">{{ business.tagline }}</div>
+  </div>
+</aside>

@@ -1,0 +1,64 @@
+{% extends "layouts/app.html" %}
+{% block title %}{% if driver_mode %}Driver expense{% else %}Expense{% endif %}{% endblock %}
+{% block header_title %}{% if driver_mode %}Driver Expense Management{% else %}Expense Management{% endif %}{% endblock %}
+{% block content %}
+{% if driver_mode %}
+  {% if object %}{% include "partials/page_header.html" with title="Edit driver expense" subtitle=object.number icon="hard-hat" %}
+  {% else %}{% include "partials/page_header.html" with title="Add driver expense" subtitle="Salary, advance, bata, food, travel — linked to the driver and, where applicable, the vehicle." icon="hard-hat" %}{% endif %}
+{% else %}
+  {% if object %}{% include "partials/page_header.html" with title="Edit expense" subtitle=object.number icon="receipt" %}
+  {% else %}{% include "partials/page_header.html" with title="Add expense" subtitle="Select the expense type and vehicle category first, then the vehicle." icon="receipt" %}{% endif %}
+{% endif %}
+
+<form method="post" enctype="multipart/form-data" class="grid gap-6 xl:grid-cols-3" novalidate>
+  {% csrf_token %}
+  <div class="xl:col-span-3">{% include "partials/form_errors.html" %}</div>
+  <div class="space-y-6 xl:col-span-2">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">{% if driver_mode %}Driver &amp; vehicle{% else %}Expense type &amp; vehicle{% endif %}</h2></div>
+      <div class="card-body grid gap-5 sm:grid-cols-2">
+        {% if driver_mode %}
+          {{ form.category }}
+          {% include "partials/field.html" with field=form.driver %}
+          {% include "partials/field.html" with field=form.driver_expense_type %}
+        {% else %}
+          <div class="sm:col-span-2">{% include "partials/field.html" with field=form.category %}</div>
+        {% endif %}
+        {% include "partials/field.html" with field=form.vehicle_category %}
+        {% include "partials/field.html" with field=form.vehicle %}
+        {% if not driver_mode %}
+          {% include "partials/field.html" with field=form.driver %}
+          {% include "partials/field.html" with field=form.litres show_when="#id_category" show_values="DIESEL" %}
+        {% endif %}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Payment details</h2></div>
+      <div class="card-body grid gap-5 sm:grid-cols-2">
+        {% include "partials/field.html" with field=form.date %}
+        {% include "partials/field.html" with field=form.amount %}
+        {% include "partials/field.html" with field=form.payment_mode %}
+        {% include "partials/field.html" with field=form.vendor %}
+        {% include "partials/field.html" with field=form.bill_number %}
+        {% include "partials/field.html" with field=form.attachment %}
+        <div class="sm:col-span-2">{% include "partials/field.html" with field=form.description %}</div>
+      </div>
+    </div>
+  </div>
+  <div class="space-y-4">
+    <div class="card card-body text-sm text-slate-600">
+      <p class="form-section mb-2">How this is counted</p>
+      <ul class="list-disc space-y-1 pl-5 text-xs leading-relaxed">
+        <li>Diesel, maintenance, repairs and spare parts must be linked to a JCB or tractor.</li>
+        <li>Driver expenses are linked to a driver and optionally to the vehicle they worked on.</li>
+        <li>Every expense is counted <strong>once</strong> in total business expenses — linking it to a vehicle or driver only assigns it, it never duplicates it.</li>
+        <li>Expenses without a vehicle are shown as general overheads.</li>
+      </ul>
+    </div>
+    {% if not user.is_admin and business.require_approval %}<p class="rounded-lg bg-navy-50 px-4 py-3 text-xs text-navy-700"><i data-lucide="info" class="mr-1 inline h-3.5 w-3.5"></i> This entry will be sent to an administrator for approval.</p>{% endif %}
+    <button class="btn-primary w-full"><i data-lucide="save"></i> Save expense</button>
+    {% if not object %}<button name="save_and_add" value="1" class="btn-secondary w-full"><i data-lucide="copy-plus"></i> Save &amp; add another</button>{% endif %}
+    <a href="{% if object %}{% url 'finance:expense_detail' object.pk %}{% elif driver_mode %}{% url 'finance:driver_expense_list' %}{% else %}{% url 'finance:expense_list' %}{% endif %}" class="btn-ghost w-full">Cancel</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "layouts/app.html" %}
+{% load erp %}
+{% block title %}Dashboard{% endblock %}
+{% block header_title %}Dashboard{% endblock %}
+{% block content %}
+<div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <h1 class="page-title">Welcome, {{ user.first_name|default:user.username }}</h1>
+    <p class="page-subtitle">{% if user.is_viewer %}Read-only access to {{ business.business_name }} records.{% else %}Your entries in {{ business.erp_title }} · {{ period.label }}{% endif %}</p>
+  </div>
+  {% if not user.is_viewer %}
+  <form method="get" class="no-print flex flex-col gap-2 sm:flex-row sm:items-center">
+    {% include "partials/period_fields.html" with autosubmit=True %}
+    <button class="btn-navy {% if period.key != 'custom' %}hidden{% endif %}" data-period-custom>Apply</button>
+  </form>
+  {% endif %}
+</div>
+
+{% if not user.is_viewer %}
+<!-- Quick actions -->
+<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+  {% if user|can:"add_income" %}
+  <a href="{% url 'finance:income_create' %}" class="group card flex items-center gap-4 p-5 transition hover:ring-2 hover:ring-brand-300">
+    <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-navy-800 text-brand-500"><i data-lucide="trending-up" class="h-6 w-6"></i></span>
+    <div><p class="font-semibold text-navy-800">Add income</p><p class="text-xs text-slate-500">Hourly, daily, fixed or manual</p></div>
+  </a>
+  {% endif %}
+  {% if user|can:"add_expense" %}
+  <a href="{% url 'finance:expense_create' %}" class="group card flex items-center gap-4 p-5 transition hover:ring-2 hover:ring-brand-300">
+    <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500 text-white"><i data-lucide="receipt" class="h-6 w-6"></i></span>
+    <div><p class="font-semibold text-navy-800">Add expense</p><p class="text-xs text-slate-500">Diesel, repairs, parts…</p></div>
+  </a>
+  {% endif %}
+  {% if user|can:"add_driver_expense" %}
+  <a href="{% url 'finance:driver_expense_create' %}" class="group card flex items-center gap-4 p-5 transition hover:ring-2 hover:ring-brand-300">
+    <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-100 text-brand-700"><i data-lucide="hard-hat" class="h-6 w-6"></i></span>
+    <div><p class="font-semibold text-navy-800">Driver expense</p><p class="text-xs text-slate-500">Salary, advance, bata…</p></div>
+  </a>
+  {% endif %}
+  {% if user|can:"record_payment" %}
+  <a href="{% url 'finance:payment_create' %}" class="group card flex items-center gap-4 p-5 transition hover:ring-2 hover:ring-brand-300">
+    <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600 text-white"><i data-lucide="wallet" class="h-6 w-6"></i></span>
+    <div><p class="font-semibold text-navy-800">Record payment</p><p class="text-xs text-slate-500">Money received from customer</p></div>
+  </a>
+  {% endif %}
+</div>
+
+<div class="mt-6 grid gap-4 sm:grid-cols-3">
+  <div class="kpi"><p class="kpi-label">Income I entered</p><p class="kpi-value">{{ business.currency_symbol }}{{ my_totals.income|inr }}</p><p class="mt-1 text-xs text-slate-500">Pending + approved, {{ period.label }}</p></div>
+  <div class="kpi"><p class="kpi-label">Expenses I entered</p><p class="kpi-value">{{ business.currency_symbol }}{{ my_totals.expense|inr }}</p><p class="mt-1 text-xs text-slate-500">Pending + approved, {{ period.label }}</p></div>
+  <div class="kpi"><p class="kpi-label">Payments I recorded</p><p class="kpi-value">{{ business.currency_symbol }}{{ my_totals.payment|inr }}</p><p class="mt-1 text-xs text-slate-500">Pending + approved, {{ period.label }}</p></div>
+</div>
+
+<div class="mt-6 grid gap-4 sm:grid-cols-3">
+  <div class="card flex items-center gap-4 p-5"><span class="badge-amber">Pending</span><span class="text-2xl font-bold text-navy-800">{{ my_counts.PENDING }}</span><span class="text-xs text-slate-500">awaiting admin approval</span></div>
+  <div class="card flex items-center gap-4 p-5"><span class="badge-green">Approved</span><span class="text-2xl font-bold text-navy-800">{{ my_counts.APPROVED }}</span></div>
+  <div class="card flex items-center gap-4 p-5"><span class="badge-red">Rejected</span><span class="text-2xl font-bold text-navy-800">{{ my_counts.REJECTED }}</span><span class="text-xs text-slate-500">edit &amp; resubmit</span></div>
+</div>
+
+{% if rejected %}
+<div class="card mt-6 border-red-200">
+  <div class="card-header"><h2 class="card-title text-red-700">Rejected entries — action needed</h2></div>
+  <ul class="divide-y divide-slate-100">
+    {% for obj in rejected %}
+    <li class="flex flex-col gap-1 px-5 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+      <div><span class="font-semibold text-navy-800">{{ obj.number }}</span> · {{ business.currency_symbol }}{{ obj.amount|inr }} <span class="text-slate-500">— {{ obj.rejection_reason|default:"No reason given" }}</span></div>
+      <a href="{% if obj.billing_type %}{% url 'finance:income_update' obj.pk %}{% elif obj.category %}{% url 'finance:expense_update' obj.pk %}{% else %}{% url 'finance:payment_update' obj.pk %}{% endif %}" class="btn-secondary btn-sm"><i data-lucide="pencil"></i> Edit &amp; resubmit</a>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endif %}
+
+<div class="card mt-6">
+  <div class="card-header"><h2 class="card-title">{% if user.is_viewer %}Recent transactions{% else %}My recent entries{% endif %}</h2></div>
+  {% include "partials/recent_list.html" %}
+</div>
+{% endblock %}

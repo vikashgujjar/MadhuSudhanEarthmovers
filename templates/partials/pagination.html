@@ -1,0 +1,19 @@
+{% load erp %}
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+<nav class="no-print flex flex-col items-center justify-between gap-3 border-t border-slate-100 px-5 py-4 text-sm sm:flex-row" aria-label="Pagination">
+  <p class="text-slate-500">Showing <span class="font-semibold text-slate-700">{{ page_obj.start_index }}–{{ page_obj.end_index }}</span> of <span class="font-semibold text-slate-700">{{ page_obj.paginator.count }}</span></p>
+  <div class="flex items-center gap-1">
+    {% if page_obj.has_previous %}
+      <a class="btn-secondary btn-sm" href="?{% query_replace page=1 %}" aria-label="First page"><i data-lucide="chevrons-left"></i></a>
+      <a class="btn-secondary btn-sm" href="?{% query_replace page=page_obj.previous_page_number %}"><i data-lucide="chevron-left"></i> Prev</a>
+    {% endif %}
+    <span class="px-3 text-slate-600">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a class="btn-secondary btn-sm" href="?{% query_replace page=page_obj.next_page_number %}">Next <i data-lucide="chevron-right"></i></a>
+      <a class="btn-secondary btn-sm" href="?{% query_replace page=page_obj.paginator.num_pages %}" aria-label="Last page"><i data-lucide="chevrons-right"></i></a>
+    {% endif %}
+  </div>
+</nav>
+{% elif page_obj %}
+<div class="border-t border-slate-100 px-5 py-3 text-sm text-slate-500">{{ page_obj.paginator.count }} record{{ page_obj.paginator.count|pluralize }}</div>
+{% endif %}

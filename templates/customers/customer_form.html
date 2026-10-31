@@ -1,0 +1,28 @@
+{% extends "layouts/app.html" %}
+{% block title %}{% if object %}Edit customer{% else %}Add customer{% endif %}{% endblock %}
+{% block header_title %}Customers{% endblock %}
+{% block content %}
+{% if object %}{% include "partials/page_header.html" with title="Edit customer" subtitle=object.name icon="users" %}
+{% else %}{% include "partials/page_header.html" with title="Add customer" subtitle="Create a customer account for billing and collections." icon="user-plus" %}{% endif %}
+<form method="post" class="card" novalidate>
+  {% csrf_token %}
+  <div class="card-body space-y-5">
+    {% include "partials/form_errors.html" %}
+    <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+      {% include "partials/field.html" with field=form.name %}
+      {% include "partials/field.html" with field=form.contact_person %}
+      {% include "partials/field.html" with field=form.phone %}
+      {% include "partials/field.html" with field=form.email %}
+      {% include "partials/field.html" with field=form.gstin %}
+      {% include "partials/field.html" with field=form.opening_balance %}
+      <div class="sm:col-span-2 xl:col-span-3">{% include "partials/field.html" with field=form.address %}</div>
+      <div class="sm:col-span-2 xl:col-span-3">{% include "partials/field.html" with field=form.notes %}</div>
+      <div class="sm:col-span-2 xl:col-span-3">{% include "partials/field.html" with field=form.is_active %}</div>
+    </div>
+  </div>
+  <div class="flex justify-end gap-3 border-t border-slate-100 px-5 py-4">
+    <a href="{% if object %}{% url 'customers:detail' object.pk %}{% else %}{% url 'customers:list' %}{% endif %}" class="btn-secondary">Cancel</a>
+    <button class="btn-primary"><i data-lucide="save"></i> Save customer</button>
+  </div>
+</form>
+{% endblock %}
