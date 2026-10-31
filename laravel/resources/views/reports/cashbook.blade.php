@@ -22,7 +22,7 @@
       @forelse ($book['entries'] as $e)
       <tr>
         <td>{{ $e['date']->format('d M Y') }}</td>
-        <td><a href="{{ $e['url'] }}" class="font-semibold text-navy-800 hover:text-brand-600">{{ $e['number'] }}</a></td>
+        <td>@if ($e['url'])<a href="{{ $e['url'] }}" class="font-semibold text-navy-800 hover:text-brand-600">{{ $e['number'] }}</a>@else<span class="font-semibold text-navy-800">{{ $e['number'] }}</span>@endif</td>
         <td class="max-w-md whitespace-normal">{{ $e['particulars'] }}</td>
         <td>{{ $e['mode'] }}</td>
         <td class="num text-emerald-700">@unless (\App\Support\Money::isZero($e['receipt'])){{ inr($e['receipt']) }}@endunless</td>

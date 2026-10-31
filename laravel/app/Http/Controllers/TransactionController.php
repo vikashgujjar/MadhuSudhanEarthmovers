@@ -87,7 +87,7 @@ abstract class TransactionController extends Controller
     protected function findEditable(string $model, int $id, Request $request): Model
     {
         $obj = $this->findVisible($model, $id, $request);
-        abort_unless($obj->canEdit($request->user()), 403, 'Approved transactions can only be changed by an administrator.');
+        abort_unless($obj->canEdit($request->user()), 403, 'You can edit only your own entries, and only until they are approved. Ask an administrator to change this one.');
 
         return $obj;
     }

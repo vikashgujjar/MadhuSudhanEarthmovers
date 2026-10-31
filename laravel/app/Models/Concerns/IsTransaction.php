@@ -117,7 +117,7 @@ trait IsTransaction
         return (int) $this->created_by === (int) $user->id && $this->status !== 'APPROVED' && ! $user->isViewer();
     }
 
-    /** Can `user` open this record's detail page? (Entry Users: own records only.) */
+    /** Can `user` open this record's detail page? */
     public function isVisibleTo(User $user): bool
     {
         return $user->seesAllRecords() || (int) $this->created_by === (int) $user->id;

@@ -187,12 +187,16 @@ class WorkflowPermissionTest extends TestCase
         $this->get(route('expenses.create'))->assertOk();
     }
 
-    public function test_entry_user_sees_only_own_transactions(): void
+    public function test_entry_user_sees_all_transactions_but_edits_only_own(): void
     {
         $mine = $this->income(amount: '100', user: $this->entry, status: 'PENDING');
         $other = $this->income(amount: '200', user: $this->admin);
-        $this->login($this->entry)->get(route('income.index'))->assertSee($mine->number)->assertDontSee($other->number);
-        $this->get($other->url())->assertNotFound();
+        $otherPending = $this->income(amount: '300', user: $this->admin, status: 'PENDING');
+        $this->login($this->entry)->get(route('income.index'))->assertSee($mine->number)->assertSee($other->number);
+        $this->get($other->url())->assertOk();
+        $this->get(route('income.edit', $mine->id))->assertOk();
+        $this->get(route('income.edit', $other->id))->assertForbidden();
+        $this->get(route('income.edit', $otherPending->id))->assertForbidden();
     }
 
     public function test_entry_user_without_reports_gets_entry_dashboard(): void

@@ -83,7 +83,8 @@ updates**, so no terminal is needed.
 | Add/edit vehicles, drivers, customers | ✔ | `manage_masters` flag | ✘ |
 | Dashboard totals, reports, cash book, profitability | ✔ | `view_reports` flag | `view_reports` flag |
 | Export PDF / Excel / CSV | ✔ | `export_reports` flag | `export_reports` flag |
-| Sees transactions | all | **own only** | all (read-only) |
+| Sees transactions | all | all (edits own only) | all (read-only) |
+| Money Lent (loans given, repayments, reminders) | ✔ | ✘ | ✘ |
 | Edit transactions | any | own, while Pending/Rejected | ✘ |
 
 Login lockout: 5 failed attempts for a username within 15 minutes block that username for

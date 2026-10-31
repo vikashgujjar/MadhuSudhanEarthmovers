@@ -7,6 +7,8 @@ use App\Models\Customer;
 use App\Models\Driver;
 use App\Models\Expense;
 use App\Models\Income;
+use App\Models\Loan;
+use App\Models\LoanRepayment;
 use App\Models\Payment;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -14,6 +16,7 @@ use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Financial aggregations shared by the dashboard, reports and exports.
@@ -257,10 +260,24 @@ final class Finance
             $expenses->where('payment_mode', $mode);
         }
 
+        // Money lent goes out of the cash book; repayments come back in.
+        $withLoans = Schema::hasTable('loans');
+        $loanLinks = (bool) auth()->user()?->isAdmin();
+        $loans = Loan::query();
+        $repayments = LoanRepayment::query()->with('loan');
+        if ($mode) {
+            $loans->where('mode', $mode);
+            $repayments->where('mode', $mode);
+        }
+
         $opening = $mode ? Money::ZERO : Money::of($settings->opening_cash_balance);
         if ($start) {
             $opening = Money::add($opening, Payment::totalOf((clone $payments)->where('date', '<', $start)));
             $opening = Money::sub($opening, Expense::totalOf((clone $expenses)->where('date', '<', $start)));
+            if ($withLoans) {
+                $opening = Money::sub($opening, Money::of((clone $loans)->where('date', '<', $start)->sum('amount')));
+                $opening = Money::add($opening, Money::of((clone $repayments)->where('date', '<', $start)->sum('amount')));
+            }
         }
 
         $entries = [];
@@ -277,6 +294,21 @@ final class Finance
                 'date' => $e->date, 'number' => (string) $e->number, 'particulars' => implode(' · ', $parts),
                 'mode' => $e->modeLabel(), 'receipt' => Money::ZERO, 'payment' => $e->amount, 'url' => route('expenses.show', $e),
             ];
+        }
+        if ($withLoans) {
+            $inRange = fn ($q) => $q->when($start, fn ($w) => $w->where('date', '>=', $start))->when($end, fn ($w) => $w->where('date', '<=', $end));
+            foreach ($inRange(clone $loans)->get() as $l) {
+                $entries[] = [
+                    'date' => $l->date, 'number' => $l->number(), 'particulars' => 'Money lent to '.$l->borrower_name,
+                    'mode' => $l->modeLabel(), 'receipt' => Money::ZERO, 'payment' => Money::of($l->amount), 'url' => $loanLinks ? route('loans.show', $l) : null,
+                ];
+            }
+            foreach ($inRange(clone $repayments)->get() as $r) {
+                $entries[] = [
+                    'date' => $r->date, 'number' => $r->loan->number(), 'particulars' => 'Loan repaid by '.$r->loan->borrower_name,
+                    'mode' => $r->modeLabel(), 'receipt' => Money::of($r->amount), 'payment' => Money::ZERO, 'url' => $loanLinks ? route('loans.show', $r->loan_id) : null,
+                ];
+            }
         }
         usort($entries, fn ($a, $b) => [$a['date']->toDateString(), $a['number']] <=> [$b['date']->toDateString(), $b['number']]);
 

@@ -231,7 +231,7 @@ class ReportsAuditBrandingTest extends TestCase
         $path = \App\Models\Expense::sole()->attachment;
         $this->get(route('media', ['path' => $path]))->assertOk();
         $other = $this->makeUser('clerk2', 'ENTRY');
-        $this->login($other)->get(route('media', ['path' => $path]))->assertForbidden();
+        $this->login($other)->get(route('media', ['path' => $path]))->assertOk();
         $this->post(route('logout'));
         $this->get(route('media', ['path' => $path]))->assertRedirect(route('login'));
         \Illuminate\Support\Facades\Storage::disk('local')->delete([$logo, $path]);

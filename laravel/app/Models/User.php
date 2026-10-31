@@ -95,10 +95,10 @@ class User extends Authenticatable
         return (bool) $this->getAttribute("can_{$name}");
     }
 
-    /** Admins and Viewers see every record; Entry Users see only their own. */
+    /** Every role sees every record; editing rights are checked separately in canEdit(). */
     public function seesAllRecords(): bool
     {
-        return $this->isAdmin() || $this->isViewer();
+        return true;
     }
 
     /** @return array<string, bool> */

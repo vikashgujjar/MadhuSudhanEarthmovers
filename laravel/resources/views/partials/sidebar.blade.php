@@ -18,6 +18,9 @@
     <a href="{{ route('expenses.index') }}" class="nav-link {{ nav_active('/finance/expenses/') }}"><i data-lucide="receipt"></i> Expenses</a>
     <a href="{{ route('driver-expenses.index') }}" class="nav-link {{ nav_active('/finance/driver-expenses/') }}"><i data-lucide="hard-hat"></i> Driver Expenses</a>
     <a href="{{ route('payments.index') }}" class="nav-link {{ nav_active('/finance/payments/') }}"><i data-lucide="wallet"></i> Payments</a>
+    @if ($loansReady)
+    <a href="{{ route('loans.index') }}" class="nav-link {{ nav_active('/loans/') }}"><i data-lucide="hand-coins"></i> <span class="flex-1">Money Lent</span>@if ($overdueLoansCount)<span class="rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white" title="Overdue">{{ $overdueLoansCount }}</span>@endif</a>
+    @endif
     @if ($user->isAdmin())
     <a href="{{ route('approvals.index') }}" class="nav-link {{ nav_active('/finance/approvals/') }}"><i data-lucide="badge-check"></i> <span class="flex-1">Approvals</span>@if ($pendingApprovalsCount)<span class="rounded-full bg-white/15 px-2 py-0.5 text-xs font-bold text-white">{{ $pendingApprovalsCount }}</span>@endif</a>
     @endif

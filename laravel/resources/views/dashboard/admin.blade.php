@@ -21,6 +21,26 @@
 </a>
 @endif
 
+@if (! empty($loanReminders) && $loanReminders['due_count'])
+<div class="no-print mb-6 overflow-hidden rounded-xl border border-red-200 bg-white">
+  <div class="flex items-center gap-3 bg-red-50 px-4 py-3 text-sm text-red-900">
+    <i data-lucide="bell-ring" class="h-5 w-5 shrink-0 text-red-600"></i>
+    <span class="flex-1"><strong>Money to collect:</strong> {{ $loanReminders['due_count'] }} loan{{ plural($loanReminders['due_count']) }} overdue or due this week. Total still lent out: {{ $business->currency_symbol }}{{ inr($loanReminders['to_collect']) }}.</span>
+    <a href="{{ route('loans.index', ['status' => 'open']) }}" class="font-semibold text-red-700 hover:underline">Money Lent →</a>
+  </div>
+  <ul class="divide-y divide-slate-100">
+    @foreach ($loanReminders['due'] as $l)
+    @php($days = $l->daysToDue())
+    <li><a href="{{ route('loans.show', $l) }}" class="flex items-center justify-between gap-3 px-4 py-2.5 text-sm hover:bg-slate-50">
+      <span><span class="font-semibold text-navy-800">{{ $l->borrower_name }}</span>@if ($l->phone)<span class="text-slate-500"> · {{ $l->phone }}</span>@endif
+        <span class="block text-xs {{ $days < 0 ? 'font-semibold text-red-600' : 'text-slate-500' }}">{{ $days < 0 ? (-$days).' day'.plural(-$days).' overdue' : ($days === 0 ? 'Due today' : "Due in {$days} day".plural($days)) }} · {{ $l->due_date->format('d M Y') }}</span></span>
+      <span class="font-bold tabular text-amber-700">{{ inr($l->balance()) }}</span>
+    </a></li>
+    @endforeach
+  </ul>
+</div>
+@endif
+
 @php($loss = \App\Support\Money::isNegative($s['net_profit']))
 <!-- KPIs -->
 <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">

@@ -9,6 +9,7 @@ use App\Http\Controllers\DriverController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\InstallController;
+use App\Http\Controllers\LoanController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ReportController;
@@ -70,6 +71,20 @@ Route::middleware('auth')->group(function () {
         Route::post('finance/expenses/{expense}/delete', [ExpenseController::class, 'destroy']);
         Route::get('finance/payments/{payment}/delete', [PaymentController::class, 'confirmDelete'])->name('payments.delete');
         Route::post('finance/payments/{payment}/delete', [PaymentController::class, 'destroy']);
+
+        // Money lent
+        Route::get('loans', [LoanController::class, 'index'])->name('loans.index');
+        Route::get('loans/new', [LoanController::class, 'create'])->name('loans.create');
+        Route::post('loans/new', [LoanController::class, 'store']);
+        Route::get('loans/{loan}', [LoanController::class, 'show'])->whereNumber('loan')->name('loans.show');
+        Route::get('loans/{loan}/edit', [LoanController::class, 'edit'])->whereNumber('loan')->name('loans.edit');
+        Route::post('loans/{loan}/edit', [LoanController::class, 'update'])->whereNumber('loan');
+        Route::get('loans/{loan}/delete', [LoanController::class, 'confirmDelete'])->whereNumber('loan')->name('loans.delete');
+        Route::post('loans/{loan}/delete', [LoanController::class, 'destroy'])->whereNumber('loan');
+        Route::post('loans/{loan}/repayments', [LoanController::class, 'storeRepayment'])->whereNumber('loan')->name('loans.repay');
+        Route::get('loans/{loan}/repayments/{repayment}/delete', [LoanController::class, 'confirmDeleteRepayment'])
+            ->whereNumber(['loan', 'repayment'])->name('loans.repayments.delete');
+        Route::post('loans/{loan}/repayments/{repayment}/delete', [LoanController::class, 'destroyRepayment'])->whereNumber(['loan', 'repayment']);
     });
 
     // Fleet

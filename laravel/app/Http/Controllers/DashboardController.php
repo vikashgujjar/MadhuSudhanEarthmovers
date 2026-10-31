@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Expense;
 use App\Models\Income;
+use App\Models\Loan;
 use App\Models\Payment;
 use App\Services\Finance;
 use App\Support\Money;
@@ -36,6 +37,7 @@ class DashboardController extends Controller
                     'expense' => array_map(fn ($c) => Money::toFloat($c['expense']), array_values($summary['categories'])),
                 ],
                 'driverRows' => array_slice(Finance::driverExpenseSummary($period->startDate(), $period->endDate()), 0, 5),
+                'loanReminders' => $user->isAdmin() ? $this->loanReminders() : null,
                 'pending' => [
                     'income' => Income::pending()->count(),
                     'expense' => Expense::pending()->count(),
@@ -66,5 +68,24 @@ class DashboardController extends Controller
             ],
             'rejected' => $rejected,
         ]);
+    }
+
+    /** Money lent that is overdue or due within a week (null until the loans tables exist). */
+    private function loanReminders(): ?array
+    {
+        try {
+            $open = Loan::query()->withRepaid()->unsettled()->get();
+        } catch (\Illuminate\Database\QueryException) {
+            return null;
+        }
+        $soon = now()->addDays(7)->startOfDay();
+        $due = $open->filter(fn (Loan $l) => $l->due_date && $l->due_date->lte($soon))->sortBy('due_date')->values();
+
+        return [
+            'to_collect' => Money::sum($open->map->balance()->all()),
+            'open_count' => $open->count(),
+            'due' => $due->take(6),
+            'due_count' => $due->count(),
+        ];
     }
 }

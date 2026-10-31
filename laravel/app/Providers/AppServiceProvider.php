@@ -42,9 +42,16 @@ class AppServiceProvider extends ServiceProvider
             $request = request();
             if (! $request->attributes->has('erp.shared')) {
                 $user = auth()->user();
-                $shared = ['business' => BusinessSetting::current(), 'pendingApprovalsCount' => 0, 'user' => $user];
+                $shared = ['business' => BusinessSetting::current(), 'pendingApprovalsCount' => 0, 'user' => $user,
+                    'loansReady' => false, 'overdueLoansCount' => 0];
                 if ($user && $user->isAdmin()) {
                     $shared['pendingApprovalsCount'] = Income::pending()->count() + Expense::pending()->count() + Payment::pending()->count();
+                    // The loans tables arrive with a later database update; until it is applied, hide the menu entry.
+                    try {
+                        $shared['overdueLoansCount'] = \App\Models\Loan::overdue()->count();
+                        $shared['loansReady'] = true;
+                    } catch (\Illuminate\Database\QueryException) {
+                    }
                 }
                 $request->attributes->set('erp.shared', $shared);
             }

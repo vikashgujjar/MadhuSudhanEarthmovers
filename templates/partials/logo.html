@@ -1,8 +1,0 @@
-{# Organisation logo + wordmark. `dark` = on navy background. #}
-<div class="flex items-center gap-3">
-  {% include "partials/logo_mark.html" %}
-  <div class="min-w-0 leading-none">
-    <div class="truncate font-display text-[1.35rem] font-extrabold uppercase tracking-wide {% if dark %}text-white{% else %}text-navy-800{% endif %}">{{ business.name_primary }}</div>
-    {% if business.name_secondary %}<div class="mt-1 truncate font-display text-[0.8rem] font-semibold uppercase tracking-[0.32em] text-brand-500">{{ business.name_secondary }}</div>{% endif %}
-  </div>
-</div>

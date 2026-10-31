@@ -176,7 +176,7 @@ class ExpenseController extends TransactionController
         $expense = $this->findVisible(Expense::class, $id, $request);
         $capability = $expense->isDriverExpense() ? 'add_driver_expense' : 'add_expense';
         abort_unless($request->user()->hasCapability($capability), 403, 'You do not have permission to perform this action.');
-        abort_unless($expense->canEdit($request->user()), 403, 'Approved transactions can only be changed by an administrator.');
+        abort_unless($expense->canEdit($request->user()), 403, 'You can edit only your own entries, and only until they are approved. Ask an administrator to change this one.');
 
         return $expense;
     }
