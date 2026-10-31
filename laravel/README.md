@@ -32,6 +32,13 @@ php artisan serve
 
 Open http://127.0.0.1:8000.
 
+Demo data for trying it out (refuses to run when `APP_ENV=production`):
+
+```powershell
+php artisan erp:demo-data            # vehicles, drivers, customers, ~6 months of transactions, loans, 2 demo logins
+php artisan erp:demo-data --remove   # delete all business records again
+```
+
 ## Tests
 
 ```powershell
