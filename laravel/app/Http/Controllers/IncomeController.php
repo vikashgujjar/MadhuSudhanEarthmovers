@@ -78,7 +78,7 @@ class IncomeController extends TransactionController
             $rows[] = [
                 'date' => $i->date, 'number' => $i->number, 'customer' => $i->customer->name, 'category' => $i->categoryLabel(),
                 'vehicle' => $i->vehicle->displayName(), 'billing' => $i->billingLabel(),
-                'qty' => $i->quantity ? qty($i->quantity).' '.$i->unitLabel().' × '.$i->rate : '',
+                'qty' => $i->quantity ? $i->quantityLabel().' × '.$i->rate : '',
                 'amount' => $i->amount, 'received' => Money::of($i->received), 'balance' => $balance, 'status' => $i->statusLabel(),
             ];
             if ($i->isApproved()) {

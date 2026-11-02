@@ -14,7 +14,31 @@ class CalculationTest extends TestCase
     // --- billing -----------------------------------------------------------
     public function test_hourly_amount_is_quantity_times_rate(): void
     {
-        $this->assertSame('9000.00', $this->income(billing: 'HOURLY', qty: '7.5', rate: '1200')->amount);
+        $this->assertSame('9000.00', $this->income(billing: 'HOURLY', qty: '7.30', rate: '1200')->amount);
+    }
+
+    public function test_hourly_quantity_is_hours_dot_minutes(): void
+    {
+        $this->assertSame('1800.00', $this->income(billing: 'HOURLY', qty: '1.30', rate: '1200')->amount);
+        $this->assertSame('1300.00', $this->income(billing: 'HOURLY', qty: '1.05', rate: '1200')->amount);
+        $this->assertSame('750.00', $this->income(billing: 'HOURLY', qty: '0.45', rate: '1000')->amount);
+        $this->assertSame('3180.00', $this->income(billing: 'HOURLY', qty: '2.39', rate: '1200')->amount);
+        $this->assertSame('3580.00', $this->income(billing: 'HOURLY', qty: '2.59', rate: '1200')->amount);
+        $this->assertSame('1 hr 30 min', $this->income(billing: 'HOURLY', qty: '1.30', rate: '1200')->quantityLabel());
+        $this->assertSame('2 hr', $this->income(billing: 'HOURLY', qty: '2', rate: '1200')->quantityLabel());
+        $this->assertSame('45 min', $this->income(billing: 'HOURLY', qty: '0.45', rate: '1200')->quantityLabel());
+        $this->assertSame('1.5 days', $this->income(billing: 'DAILY', qty: '1.5', rate: '9000')->quantityLabel());
+    }
+
+    public function test_hourly_minutes_must_be_below_sixty(): void
+    {
+        $this->assertValidationKeys(fn () => $this->income(billing: 'HOURLY', qty: '1.60', rate: '1200'), ['quantity']);
+        $this->assertValidationKeys(fn () => $this->income(billing: 'HOURLY', qty: '1.75', rate: '1200'), ['quantity']);
+    }
+
+    public function test_daily_quantity_stays_decimal(): void
+    {
+        $this->assertSame('13500.00', $this->income(billing: 'DAILY', qty: '1.5', rate: '9000')->amount);
     }
 
     public function test_daily_amount_is_days_times_rate(): void
@@ -60,7 +84,9 @@ class CalculationTest extends TestCase
 
     public function test_amount_rounding_is_half_up_to_paise(): void
     {
-        $this->assertSame('330.02', $this->income(billing: 'HOURLY', qty: '0.33', rate: '1000.05')->amount);
+        $this->assertSame('330.02', $this->income(billing: 'DAILY', qty: '0.33', rate: '1000.05')->amount);
+        // 33 min × 1000.05/hr = 550.0275 → 550.03
+        $this->assertSame('550.03', $this->income(billing: 'HOURLY', qty: '0.33', rate: '1000.05')->amount);
     }
 
     public function test_money_helpers(): void

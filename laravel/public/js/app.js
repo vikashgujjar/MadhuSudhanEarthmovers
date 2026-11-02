@@ -158,7 +158,14 @@
       if (quantityBased) {
         const q = parseFloat(qty && qty.value) || 0;
         const r = parseFloat(rate && rate.value) || 0;
-        amount.value = q && r ? (Math.round(q * r * 100) / 100).toFixed(2) : "";
+        if (billing.value === "HOURLY") {
+          // hours.minutes: 1.30 = 1 hr 30 min; same rounding as Money::multiplyHours
+          const hundredths = Math.round(q * 100);
+          const minutes = Math.floor(hundredths / 100) * 60 + (hundredths % 100);
+          amount.value = minutes && r && hundredths % 100 < 60 ? (Math.round(minutes * Math.round(r * 100) / 60) / 100).toFixed(2) : "";
+        } else {
+          amount.value = q && r ? (Math.round(q * r * 100) / 100).toFixed(2) : "";
+        }
       }
       if (preview) preview.textContent = fmt(amount.value);
       if (balance && received) {

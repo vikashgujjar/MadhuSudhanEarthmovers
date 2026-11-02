@@ -73,6 +73,31 @@ final class Money
         return self::fromPaise($sign * intdiv(abs($product) + 50, 100));
     }
 
+    /** Hours written as hours.minutes ("1.30" = 1 h 30 min) to whole minutes. */
+    public static function toMinutes(string|int|float|null $hoursMinutes): int
+    {
+        $hundredths = self::toPaise($hoursMinutes);
+        $sign = $hundredths < 0 ? -1 : 1;
+        $abs = abs($hundredths);
+
+        return $sign * (intdiv($abs, 100) * 60 + $abs % 100);
+    }
+
+    /** True when the minutes part of an hours.minutes value is 0–59. */
+    public static function isValidHoursMinutes(string|int|float|null $hoursMinutes): bool
+    {
+        return abs(self::toPaise($hoursMinutes)) % 100 < 60;
+    }
+
+    /** hours.minutes × hourly rate ("1.30" × 1200 = 1800.00), rounded half up to paise. */
+    public static function multiplyHours(string|int|float|null $hoursMinutes, string|int|float|null $rate): string
+    {
+        $product = self::toMinutes($hoursMinutes) * self::toPaise($rate); // paise × minutes
+        $sign = $product < 0 ? -1 : 1;
+
+        return self::fromPaise($sign * intdiv(abs($product) + 30, 60));
+    }
+
     public static function cmp(string|int|float|null $a, string|int|float|null $b): int
     {
         return self::toPaise($a) <=> self::toPaise($b);

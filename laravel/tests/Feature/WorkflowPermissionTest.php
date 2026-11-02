@@ -128,6 +128,22 @@ class WorkflowPermissionTest extends TestCase
         $this->assertSame(['PENDING', null, '4800.00'], [$inc->status, $inc->rejection_reason, $inc->amount]);
     }
 
+    public function test_hourly_form_takes_hours_dot_minutes_and_shows_them(): void
+    {
+        $this->login($this->admin)->post(route('income.create'), $this->incomePost($this->jcb1, $this->cust, ['quantity' => '1.30']));
+        $inc = Income::sole();
+        $this->assertSame('1800.00', $inc->amount);
+        $this->get($inc->url())->assertOk()->assertSee('1 hr 30 min');
+        $this->get(route('income.index'))->assertOk()->assertSee('1 hr 30 min');
+
+        $this->post(route('income.edit', $inc->id), $this->incomePost($this->jcb1, $this->cust, ['quantity' => '2.45']));
+        $this->assertSame('3300.00', $inc->fresh()->amount);
+
+        $this->post(route('income.create'), $this->incomePost($this->jcb1, $this->cust, ['quantity' => '1.60']))
+            ->assertSessionHasErrors('quantity');
+        $this->assertSame(1, Income::count());
+    }
+
     public function test_entry_user_cannot_edit_approved_entry(): void
     {
         $inc = $this->income(amount: '5000', user: $this->entry);

@@ -29,7 +29,7 @@
         <td>{{ $i->date->format('d M Y') }}</td>
         <td><a href="{{ route('income.show', $i->id) }}" class="font-semibold text-navy-800 hover:text-brand-600">{{ $i->number }}</a></td>
         <td>{{ $i->customer->name }}</td><td>{{ $i->vehicle->displayName() }}</td>
-        <td class="text-xs">{{ $i->billingLabel() }}@if ($i->quantity)<div class="text-slate-500">{{ qty($i->quantity) }} {{ $i->unitLabel() }} × {{ inr($i->rate) }}</div>@endif</td>
+        <td class="text-xs">{{ $i->billingLabel() }}@if ($i->quantity)<div class="text-slate-500">{{ $i->quantityLabel() }} × {{ inr($i->rate) }}</div>@endif</td>
         <td class="num font-semibold">{{ inr($i->amount) }}</td><td>{{ $i->creator }}</td>
         <td>@include('finance._approve-actions', ['kind' => 'income', 'obj' => $i])</td>
       </tr>@endforeach</tbody>

@@ -166,7 +166,7 @@ class DemoData extends Command
                 'date' => $day->toDateString(), 'vehicle_category' => $vehicle->category, 'vehicle_id' => $vehicle->id,
                 'customer_id' => $c[mt_rand(0, 5)]->id, 'driver_id' => collect($d)->firstWhere('assigned_vehicle_id', $vehicle->id)?->id,
                 'billing_type' => $billing, 'work_location' => $sites[mt_rand(0, 5)],
-                'quantity' => match ($billing) { 'HOURLY' => mt_rand(4, 24) + (mt_rand(0, 1) ? 0.5 : 0), 'DAILY' => mt_rand(1, 6), default => null },
+                'quantity' => match ($billing) { 'HOURLY' => mt_rand(4, 24) + (mt_rand(0, 1) ? 0.3 : 0), 'DAILY' => mt_rand(1, 6), default => null },
                 'rate' => match ($billing) { 'HOURLY' => $vehicle->hourly_rate, 'DAILY' => $vehicle->daily_rate, default => null },
                 'amount' => in_array($billing, ['FIXED', 'MANUAL'], true) ? mt_rand(8, 60) * 1000 : null,
                 'description' => ['Earth excavation', 'Trench digging', 'Site levelling', 'Loading and shifting', 'Pond digging'][mt_rand(0, 4)],

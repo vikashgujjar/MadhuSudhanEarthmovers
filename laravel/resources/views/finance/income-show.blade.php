@@ -28,7 +28,7 @@
         <div class="flex justify-between border-b border-slate-100 px-5 py-3"><dt class="text-slate-500">Driver</dt><dd class="font-medium">{{ $income->driver?->name ?? '—' }}</dd></div>
         <div class="flex justify-between border-b border-slate-100 px-5 py-3"><dt class="text-slate-500">Work location</dt><dd class="font-medium">{{ $income->work_location ?: '—' }}</dd></div>
         <div class="flex justify-between border-b border-slate-100 px-5 py-3"><dt class="text-slate-500">Billing type</dt><dd class="font-medium">{{ $income->billingLabel() }}</dd></div>
-        <div class="flex justify-between border-b border-slate-100 px-5 py-3"><dt class="text-slate-500">Calculation</dt><dd class="font-medium">@if ($income->quantity){{ qty($income->quantity) }} {{ $income->unitLabel() }} × {{ $business->currency_symbol }}{{ inr($income->rate) }}@else Entered amount @endif</dd></div>
+        <div class="flex justify-between border-b border-slate-100 px-5 py-3"><dt class="text-slate-500">Calculation</dt><dd class="font-medium">@if ($income->quantity){{ $income->quantityLabel() }} × {{ $business->currency_symbol }}{{ inr($income->rate) }}@else Entered amount @endif</dd></div>
         @if ($income->description)<div class="px-5 py-3 sm:col-span-2"><dt class="text-slate-500">Description</dt><dd class="mt-1 whitespace-pre-line">{{ $income->description }}</dd></div>@endif
       </dl>
     </div>

@@ -34,7 +34,7 @@
       <div class="card-header"><h2 class="card-title"><span class="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-brand-500 text-xs font-bold text-white">2</span>Billing</h2></div>
       <div class="card-body grid gap-5 sm:grid-cols-2">
         <x-field name="billing_type" label="Billing type" type="select" :options="\App\Models\Income::BILLING_TYPES" :value="$income->billing_type" required wrapper="sm:col-span-2" />
-        <x-field name="quantity" label="Hours / days worked" type="number" step="0.25" min="0" :value="$income->quantity" show-when="#id_billing_type" show-values="HOURLY,DAILY" />
+        <x-field name="quantity" label="Hours / days worked" type="number" step="0.01" min="0" :value="$income->quantity" help="Hours as hours.minutes: 1.30 = 1 hr 30 min, 2.45 = 2 hr 45 min." show-when="#id_billing_type" show-values="HOURLY,DAILY" />
         <x-field name="rate" label="Rate" type="number" :value="$income->rate" help="Per hour or per day; pre-filled from the vehicle." show-when="#id_billing_type" show-values="HOURLY,DAILY" />
         <x-field name="amount" label="Billed amount" type="number" :value="$income->amount" help="Calculated automatically for hourly and daily billing." wrapper="sm:col-span-2" />
         <x-field name="description" label="Description" type="textarea" rows="2" :value="$income->description" wrapper="sm:col-span-2" />

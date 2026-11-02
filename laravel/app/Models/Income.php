@@ -78,6 +78,22 @@ class Income extends Model
         return ['HOURLY' => 'hrs', 'DAILY' => 'days'][$this->billing_type] ?? '';
     }
 
+    /** "1 hr 30 min" for hourly billing (quantity is hours.minutes), "3 days" for daily. */
+    public function quantityLabel(): string
+    {
+        if ($this->quantity === null || $this->quantity === '') {
+            return '';
+        }
+        if ($this->billing_type !== 'HOURLY') {
+            return qty($this->quantity).' '.$this->unitLabel();
+        }
+        $minutes = Money::toMinutes($this->quantity);
+        $h = intdiv($minutes, 60);
+        $m = $minutes % 60;
+
+        return trim(($h ? $h.' hr ' : '').($m ? $m.' min' : ''));
+    }
+
     public function billingLabel(): string
     {
         return self::BILLING_TYPES[$this->billing_type] ?? (string) $this->billing_type;
@@ -91,7 +107,9 @@ class Income extends Model
     public function computeAmount(): void
     {
         if ($this->isQuantityBilling() && Money::isPositive($this->quantity) && $this->rate !== null && $this->rate !== '') {
-            $this->amount = Money::multiply($this->quantity, $this->rate);
+            $this->amount = $this->billing_type === 'HOURLY'
+                ? Money::multiplyHours($this->quantity, $this->rate)
+                : Money::multiply($this->quantity, $this->rate);
         }
     }
 
@@ -109,6 +127,8 @@ class Income extends Model
             $unit = $this->billing_type === 'HOURLY' ? 'hour' : 'day';
             if (! Money::isPositive($this->quantity)) {
                 $errors['quantity'] = "Enter the number of {$unit}s worked.";
+            } elseif ($this->billing_type === 'HOURLY' && ! Money::isValidHoursMinutes($this->quantity)) {
+                $errors['quantity'] = 'Enter hours.minutes with minutes from 00 to 59, e.g. 1.30 for 1 hr 30 min.';
             }
             if ($this->rate === null || $this->rate === '' || ! Money::isPositive($this->rate)) {
                 $errors['rate'] = "Enter the rate per {$unit}.";
