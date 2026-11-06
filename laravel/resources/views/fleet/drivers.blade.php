@@ -6,6 +6,7 @@
   <div><h1 class="page-title">Drivers</h1><p class="page-subtitle">Operators, assigned machines, salary and allowance details.</p></div>
   <div class="flex flex-wrap gap-2">
     @include('partials.export-buttons')
+    @if ($attendanceReady)<a href="{{ route('attendance.index') }}" class="btn-secondary"><i data-lucide="calendar-check"></i> Attendance</a>@endif
     @can('manage_masters')<a href="{{ route('drivers.create') }}" class="btn-primary"><i data-lucide="user-plus"></i> Add driver</a>@endcan
   </div>
 </div>
@@ -19,13 +20,14 @@
   </form>
   <div class="tbl-wrap">
     <table class="tbl">
-      <thead><tr><th>Driver</th><th>Licence</th><th>Assigned vehicle</th><th class="num">Monthly salary</th><th class="num">Daily allowance</th><th>Status</th><th class="text-right">Actions</th></tr></thead>
+      <thead><tr><th>Driver</th><th>Licence</th><th>Assigned vehicle</th><th>Joined</th><th class="num">Monthly salary</th><th class="num">Daily allowance</th><th>Status</th><th class="text-right">Actions</th></tr></thead>
       <tbody>
       @forelse ($drivers as $d)
       <tr>
         <td><a href="{{ route('drivers.show', $d) }}" class="font-semibold text-navy-800 hover:text-brand-600">{{ $d->name }}</a><div class="text-xs text-slate-500">{{ $d->phone ?: 'No phone' }}</div></td>
         <td>{{ $d->license_number ?: '—' }}@if ($d->license_expiry)<div class="text-xs text-slate-500">Expires {{ $d->license_expiry->format('d M Y') }}</div>@endif</td>
         <td>@if ($d->assignedVehicle)<a href="{{ route('vehicles.show', $d->assignedVehicle) }}" class="hover:text-brand-600">{{ $d->assignedVehicle->displayName() }}</a>@else<span class="text-slate-400">—</span>@endif</td>
+        <td>{{ $d->joining_date?->format('d M Y') ?? '—' }}</td>
         <td class="num">{{ inr($d->monthly_salary) }}</td>
         <td class="num">{{ inr($d->daily_allowance) }}</td>
         <td><span class="{{ status_badge($d->status) }}">{{ $d->statusLabel() }}</span></td>
@@ -35,7 +37,7 @@
         </div></td>
       </tr>
       @empty
-      <tr><td colspan="7" class="py-12 text-center text-slate-500">No drivers found.@can('manage_masters') <a href="{{ route('drivers.create') }}" class="font-semibold text-brand-600">Add a driver</a>.@endcan</td></tr>
+      <tr><td colspan="8" class="py-12 text-center text-slate-500">No drivers found.@can('manage_masters') <a href="{{ route('drivers.create') }}" class="font-semibold text-brand-600">Add a driver</a>.@endcan</td></tr>
       @endforelse
       </tbody>
     </table>

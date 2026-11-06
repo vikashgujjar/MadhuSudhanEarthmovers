@@ -141,7 +141,7 @@ class ExpenseController extends TransactionController
     private function form(Request $request, Expense $expense, bool $driverMode)
     {
         if (! $expense->exists) {
-            $expense->fill($this->prefill($request, ['vehicle_category']));
+            $expense->fill($this->prefill($request, ['vehicle_category', 'driver_expense_type']));
         }
         $category = old('vehicle_category', $expense->vehicle_category);
 

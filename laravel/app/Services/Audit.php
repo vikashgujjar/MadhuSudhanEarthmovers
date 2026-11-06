@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 /** Writes the immutable audit trail. */
 final class Audit
 {
-    private const EXCLUDED = ['password', 'remember_token', 'updated_at', 'last_login_at'];
+    private const EXCLUDED = ['password', 'remember_token', 'updated_at', 'last_login_at', 'attendance_token'];
 
     private const RELATIONS = ['created_by' => 'creator', 'approved_by' => 'approver'];
 

@@ -14,6 +14,9 @@
       @php($prefill = ['driver' => $driver->id] + ($driver->assignedVehicle ? ['vehicle_category' => $driver->assignedVehicle->category, 'vehicle' => $driver->assignedVehicle->id] : []))
       <a href="{{ route('driver-expenses.create', $prefill) }}" class="btn-primary"><i data-lucide="plus"></i> Driver expense</a>
     @endcan
+    @if ($driverBookReady)
+    @can('view_reports')<a href="{{ route('driver-book.show', $driver) }}" class="btn-secondary"><i data-lucide="book-user"></i> Cash book</a>@endcan
+    @endif
     @can('manage_masters')<a href="{{ route('drivers.edit', $driver) }}" class="btn-secondary"><i data-lucide="pencil"></i> Edit</a>@endcan
     @can('admin')<a href="{{ route('drivers.delete', $driver) }}" class="btn-ghost text-red-600" aria-label="Delete driver"><i data-lucide="trash-2"></i></a>@endcan
   </div>
@@ -48,12 +51,58 @@
     </div>
     @endif
   </div>
-  <div class="card xl:col-span-2">
+  <div class="space-y-6 xl:col-span-2">
+  <div class="card">
     <div class="card-header"><h2 class="card-title">Expense history</h2><a href="{{ route('driver-expenses.index', ['driver' => $driver->id]) }}" class="text-sm font-semibold text-brand-600">All →</a></div>
     <div class="tbl-wrap"><table class="tbl">
       <thead><tr><th>Date</th><th>No.</th><th>Type</th><th>Vehicle</th><th class="num">Amount</th><th>Status</th></tr></thead>
       <tbody>@forelse ($expenses as $e)<tr><td>{{ $e->date->format('d M Y') }}</td><td><a class="font-semibold text-navy-800 hover:text-brand-600" href="{{ route('expenses.show', $e->id) }}">{{ $e->number }}</a></td><td>{{ $e->isDriverExpense() ? $e->driverTypeLabel() : $e->categoryLabel() }}</td><td>{{ $e->vehicle?->displayName() ?? '—' }}</td><td class="num">{{ inr($e->amount) }}</td><td><span class="{{ status_badge($e->status) }}">{{ $e->statusLabel() }}</span></td></tr>@empty<tr><td colspan="6" class="py-10 text-center text-slate-500">No expenses recorded for this driver.</td></tr>@endforelse</tbody>
     </table></div>
+  </div>
+  @if ($attendance !== null && $driver->status === 'ACTIVE' && $user->hasCapability('mark_attendance'))
+  <div class="card no-print">
+    <div class="card-header"><h2 class="card-title">Attendance link</h2></div>
+    <div class="card-body space-y-4">
+      @if ($driver->attendance_token)
+        @php($punchUrl = route('driver.punch', $driver->attendance_token))
+        @php($waDigits = substr(preg_replace('/\D/', '', (string) $driver->phone), -10))
+        <p class="text-sm text-slate-600">Send this private link to {{ $driver->name }}. It opens without a login and lets them punch in and out for today.</p>
+        <div class="flex flex-col gap-2 sm:flex-row">
+          <input type="text" id="punch_link" value="{{ $punchUrl }}" readonly class="form-input flex-1" aria-label="Attendance link">
+          <button type="button" class="btn-secondary" data-copy="#punch_link"><i data-lucide="copy"></i> <span data-copy-label>Copy</span></button>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          @if (strlen($waDigits) === 10)<a href="https://wa.me/91{{ $waDigits }}?text={{ rawurlencode("Hi {$driver->name}, use this link to mark your attendance every day: {$punchUrl}") }}" target="_blank" rel="noopener" class="btn-secondary"><i data-lucide="message-circle"></i> Send on WhatsApp</a>@endif
+          <form method="post" action="{{ route('drivers.punch-link', $driver) }}" data-confirm="Generate a new link? The current link will stop working.">@csrf<button class="btn-secondary"><i data-lucide="refresh-cw"></i> Generate new link</button></form>
+          <form method="post" action="{{ route('drivers.punch-link.revoke', $driver) }}" data-confirm="Turn off this link? The driver will no longer be able to use it.">@csrf<button class="btn-ghost text-red-600"><i data-lucide="link-2-off"></i> Turn off</button></form>
+        </div>
+      @else
+        <p class="text-sm text-slate-600">Generate a private link so {{ $driver->name }} can punch in and out from their phone without a login.</p>
+        <form method="post" action="{{ route('drivers.punch-link', $driver) }}">@csrf<button class="btn-primary"><i data-lucide="link"></i> Generate link</button></form>
+      @endif
+    </div>
+  </div>
+  @endif
+  @if ($attendance !== null)
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Attendance · {{ $attendanceMonth->format('F Y') }}</h2><a href="{{ route('attendance.index') }}" class="text-sm font-semibold text-brand-600">Daily sheet →</a></div>
+    <form method="get" class="no-print flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row">
+      <input type="month" name="month" value="{{ $attendanceMonth->format('Y-m') }}" class="form-input sm:w-48" aria-label="Attendance month">
+      <button class="btn-navy"><i data-lucide="calendar-search"></i> Open month</button>
+    </form>
+    <div class="flex flex-wrap gap-2 border-b border-slate-100 px-5 py-3 text-sm">
+      <span class="badge-green">Present {{ $attendanceCounts['PRESENT'] }}</span>
+      <span class="badge-orange">Half day {{ $attendanceCounts['HALF_DAY'] }}</span>
+      <span class="badge-red">Absent {{ $attendanceCounts['ABSENT'] }}</span>
+      <span class="badge-slate">On leave {{ $attendanceCounts['LEAVE'] }}</span>
+      @if ($attendanceCounts['minutes'])<span class="badge-navy">Worked {{ \App\Models\DriverAttendance::durationLabel($attendanceCounts['minutes']) }}</span>@endif
+    </div>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Date</th><th>Status</th><th>Punch in</th><th>Punch out</th><th>Worked</th><th>Notes</th></tr></thead>
+      <tbody>@forelse ($attendance as $a)<tr><td>{{ $a->date->format('d M Y') }}<div class="text-xs text-slate-500">{{ $a->date->format('l') }}</div></td><td><span class="{{ $a->statusBadge() }}">{{ $a->statusLabel() }}</span>@if ($a->self_marked)<div class="mt-1 text-xs text-slate-500">via driver link</div>@endif</td><td>{{ \App\Models\DriverAttendance::timeLabel($a->punch_in) ?: '—' }}</td><td>{{ \App\Models\DriverAttendance::timeLabel($a->punch_out) ?: '—' }}</td><td>{{ $a->workedLabel() ?: '—' }}</td><td class="max-w-xs whitespace-normal text-slate-600">{{ $a->notes }}</td></tr>@empty<tr><td colspan="6" class="py-10 text-center text-slate-500">No attendance recorded for this month.</td></tr>@endforelse</tbody>
+    </table></div>
+  </div>
+  @endif
   </div>
 </div>
 @endsection

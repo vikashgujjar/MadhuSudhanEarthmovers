@@ -28,7 +28,7 @@
       <x-field name="assigned_vehicle" label="Assigned vehicle" type="select" empty="— Not assigned —"
         :options="$vehicles->mapWithKeys(fn ($v) => [$v->id => (string) $v])->all()" :value="$driver->assigned_vehicle_id" />
       <x-field name="joining_date" label="Joining date" type="date" :value="$driver->joining_date" />
-      <x-field name="monthly_salary" label="Monthly salary" type="number" :value="$driver->monthly_salary" required />
+      <x-field name="monthly_salary" label="Monthly salary" type="number" :value="$driver->monthly_salary" required help="A change applies from the current month in the cash book. Earlier months keep the old salary." />
       <x-field name="daily_allowance" label="Daily allowance (bata)" type="number" :value="$driver->daily_allowance" required />
       <x-field name="notes" label="Notes" type="textarea" :value="$driver->notes" wrapper="sm:col-span-2 xl:col-span-4" />
     </div>

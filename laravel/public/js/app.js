@@ -183,6 +183,47 @@
     recalc();
   }
 
+  /* ---------- Copy a read-only value (works without HTTPS too) ---------- */
+  document.addEventListener("click", (e) => {
+    const button = e.target.closest("[data-copy]");
+    if (!button) return;
+    const input = $(button.dataset.copy);
+    if (!input) return;
+    input.select();
+    const label = $("[data-copy-label]", button);
+    const done = () => {
+      if (!label) return;
+      label.textContent = "Copied";
+      setTimeout(() => { label.textContent = "Copy"; }, 2000);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(input.value).then(done);
+    } else if (document.execCommand("copy")) {
+      done();
+    }
+  });
+
+  /* ---------- Driver attendance sheet ---------- */
+  function initAttendanceSheet(form) {
+    $$("[data-attendance-row]", form).forEach((row) => {
+      const status = $("[data-attendance-status]", row);
+      const times = $$("[data-attendance-time]", row);
+      // Absent or on leave: no punch times. Disabled inputs are not submitted.
+      function sync() {
+        const off = status.value === "ABSENT" || status.value === "LEAVE";
+        times.forEach((t) => {
+          t.disabled = off;
+          if (off) t.value = "";
+        });
+      }
+      status.addEventListener("change", sync);
+      times.forEach((t) => t.addEventListener("input", () => {
+        if (!status.value && t.value) status.value = "PRESENT";
+      }));
+      sync();
+    });
+  }
+
   /* ---------- Payment form: open invoices for the selected customer ---------- */
   function initPaymentForm(form) {
     const customer = $("#id_customer", form);
@@ -250,6 +291,7 @@
     });
     $$("form[data-income-form]").forEach(initIncomeForm);
     $$("form[data-payment-form]").forEach(initPaymentForm);
+    $$("form[data-attendance-sheet]").forEach(initAttendanceSheet);
   });
 
   window.ERP = { icons };

@@ -24,7 +24,7 @@ class DemoDataTest extends TestCase
     public function test_remove_then_fill_every_table(): void
     {
         $this->artisan('erp:demo-data --remove')->expectsConfirmation(
-            'Delete ALL vehicles, drivers, customers, income, expenses, payments and loans in '.config('database.connections.mysql.database').'?', 'yes'
+            'Delete ALL vehicles, drivers, attendance, customers, income, expenses, payments and loans in '.config('database.connections.mysql.database').'?', 'yes'
         )->assertSuccessful();
         $this->assertSame(0, Vehicle::count());
 

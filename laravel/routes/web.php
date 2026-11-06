@@ -1,11 +1,14 @@
 <?php
 
 use App\Http\Controllers\ApprovalController;
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DriverBookController;
 use App\Http\Controllers\DriverController;
+use App\Http\Controllers\DriverPunchController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\InstallController;
@@ -17,12 +20,20 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleController;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
 
 Route::get('install', [InstallController::class, 'show'])->name('install');
 Route::post('install', [InstallController::class, 'run'])->name('install.run');
 
 Route::get('media/{path}', [MediaController::class, 'show'])->where('path', '.*')->name('media');
+
+// A driver's private attendance link: no login, and the secret in the URL stands in for a CSRF token
+// so a page left open through the shift can still punch out.
+Route::middleware('throttle:60,1')->where(['token' => '[A-Za-z0-9]{40}'])->group(function () {
+    Route::get('punch/{token}', [DriverPunchController::class, 'show'])->name('driver.punch');
+    Route::post('punch/{token}', [DriverPunchController::class, 'store'])->withoutMiddleware(ValidateCsrfToken::class);
+});
 
 Route::middleware('guest')->group(function () {
     Route::get('accounts/login', [AuthController::class, 'showLogin'])->name('login');
@@ -112,6 +123,11 @@ Route::middleware('auth')->group(function () {
     Route::get('fleet/vehicles/{vehicle}', [VehicleController::class, 'show'])->whereNumber('vehicle')->name('vehicles.show');
     Route::get('fleet/drivers', [DriverController::class, 'index'])->name('drivers.index');
     Route::get('fleet/drivers/{driver}', [DriverController::class, 'show'])->whereNumber('driver')->name('drivers.show');
+    Route::get('fleet/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+    Route::post('fleet/attendance', [AttendanceController::class, 'store'])->middleware('can:mark_attendance');
+    Route::get('fleet/attendance/monthly', [AttendanceController::class, 'monthly'])->name('attendance.monthly');
+    Route::post('fleet/drivers/{driver}/punch-link', [DriverPunchController::class, 'generate'])->whereNumber('driver')->middleware('can:mark_attendance')->name('drivers.punch-link');
+    Route::post('fleet/drivers/{driver}/punch-link/revoke', [DriverPunchController::class, 'revoke'])->whereNumber('driver')->middleware('can:mark_attendance')->name('drivers.punch-link.revoke');
     Route::get('fleet/api/vehicles', [VehicleController::class, 'options'])->name('api.vehicles');
 
     // Customers
@@ -157,6 +173,18 @@ Route::middleware('auth')->group(function () {
         Route::get('personal-expenses/{personalExpense}', [PersonalExpenseController::class, 'show'])->whereNumber('personalExpense')->name('personal-expenses.show');
         Route::get('personal-expenses/{personalExpense}/edit', [PersonalExpenseController::class, 'edit'])->whereNumber('personalExpense')->name('personal-expenses.edit');
         Route::post('personal-expenses/{personalExpense}/edit', [PersonalExpenseController::class, 'update'])->whereNumber('personalExpense');
+    });
+
+    // Driver cash book
+    Route::middleware('can:view_reports')->group(function () {
+        Route::get('finance/driver-cashbook', [DriverBookController::class, 'index'])->name('driver-book.index');
+        Route::get('finance/driver-cashbook/{driver}', [DriverBookController::class, 'show'])->whereNumber('driver')->name('driver-book.show');
+    });
+    Route::middleware('can:admin')->whereNumber(['driver', 'adjustment'])->group(function () {
+        Route::post('finance/driver-cashbook/{driver}/setup', [DriverBookController::class, 'setup'])->name('driver-book.setup');
+        Route::post('finance/driver-cashbook/{driver}/adjustments', [DriverBookController::class, 'storeAdjustment'])->name('driver-book.adjustments');
+        Route::get('finance/driver-cashbook/{driver}/adjustments/{adjustment}/delete', [DriverBookController::class, 'confirmDeleteAdjustment'])->name('driver-book.adjustments.delete');
+        Route::post('finance/driver-cashbook/{driver}/adjustments/{adjustment}/delete', [DriverBookController::class, 'destroyAdjustment']);
     });
 
     // Reports

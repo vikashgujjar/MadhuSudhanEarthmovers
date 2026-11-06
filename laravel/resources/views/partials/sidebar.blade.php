@@ -12,11 +12,19 @@
     <a href="{{ route('fleet.tractors') }}" class="nav-link {{ nav_active('/fleet/tractors/') }}"><i data-lucide="tractor"></i> Tractor Management</a>
     <a href="{{ route('vehicles.index') }}" class="nav-link {{ nav_active('/fleet/vehicles/') }}"><i data-lucide="truck"></i> All Vehicles</a>
     <a href="{{ route('drivers.index') }}" class="nav-link {{ nav_active('/fleet/drivers/') }}"><i data-lucide="id-card"></i> Drivers</a>
+    @if ($attendanceReady)
+    <a href="{{ route('attendance.index') }}" class="nav-link {{ nav_active('/fleet/attendance/') }}"><i data-lucide="calendar-check"></i> Driver Attendance</a>
+    @endif
 
     <div class="nav-section">Transactions</div>
     <a href="{{ route('income.index') }}" class="nav-link {{ nav_active('/finance/income/') }}"><i data-lucide="trending-up"></i> Income</a>
     <a href="{{ route('expenses.index') }}" class="nav-link {{ nav_active('/finance/expenses/') }}"><i data-lucide="receipt"></i> Expenses</a>
     <a href="{{ route('driver-expenses.index') }}" class="nav-link {{ nav_active('/finance/driver-expenses/') }}"><i data-lucide="hard-hat"></i> Driver Expenses</a>
+    @if ($driverBookReady)
+    @can('view_reports')
+    <a href="{{ route('driver-book.index') }}" class="nav-link {{ nav_active('/finance/driver-cashbook/') }}"><i data-lucide="book-user"></i> Driver Cash Book</a>
+    @endcan
+    @endif
     <a href="{{ route('payments.index') }}" class="nav-link {{ nav_active('/finance/payments/') }}"><i data-lucide="wallet"></i> Payments</a>
     @if ($loansReady)
     <a href="{{ route('loans.index') }}" class="nav-link {{ nav_active('/loans/') }}"><i data-lucide="hand-coins"></i> <span class="flex-1">Money Lent</span>@if ($overdueLoansCount)<span class="rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white" title="Overdue">{{ $overdueLoansCount }}</span>@endif</a>

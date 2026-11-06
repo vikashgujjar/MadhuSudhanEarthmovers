@@ -21,14 +21,15 @@ class User extends Authenticatable
         'view_reports' => 'View financial reports and dashboard totals',
         'export_reports' => 'Export reports (PDF, Excel, CSV)',
         'manage_personal_expenses' => "View and add the owner's personal expenses",
+        'mark_attendance' => 'Mark driver attendance and punch times',
     ];
 
-    public const WRITE_CAPABILITIES = ['add_income', 'add_expense', 'add_driver_expense', 'record_payment', 'manage_masters', 'manage_personal_expenses'];
+    public const WRITE_CAPABILITIES = ['add_income', 'add_expense', 'add_driver_expense', 'record_payment', 'manage_masters', 'manage_personal_expenses', 'mark_attendance'];
 
     protected $fillable = [
         'username', 'first_name', 'last_name', 'email', 'phone', 'role', 'is_active',
         'can_add_income', 'can_add_expense', 'can_add_driver_expense', 'can_record_payment',
-        'can_manage_masters', 'can_view_reports', 'can_export_reports', 'can_manage_personal_expenses',
+        'can_manage_masters', 'can_view_reports', 'can_export_reports', 'can_manage_personal_expenses', 'can_mark_attendance',
     ];
 
     protected $hidden = ['password', 'remember_token'];

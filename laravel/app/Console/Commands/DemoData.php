@@ -5,6 +5,8 @@ namespace App\Console\Commands;
 use App\Models\AuditLog;
 use App\Models\Customer;
 use App\Models\Driver;
+use App\Models\DriverAttendance;
+use App\Models\DriverSalaryAdjustment;
 use App\Models\Expense;
 use App\Models\Income;
 use App\Models\Loan;
@@ -81,7 +83,7 @@ class DemoData extends Command
 
     private function remove(): int
     {
-        if (! $this->confirm('Delete ALL vehicles, drivers, customers, income, expenses, payments and loans in '.config('database.connections.mysql.database').'?')) {
+        if (! $this->confirm('Delete ALL vehicles, drivers, attendance, customers, income, expenses, payments and loans in '.config('database.connections.mysql.database').'?')) {
             return self::FAILURE;
         }
         DB::transaction(function () {
@@ -90,6 +92,8 @@ class DemoData extends Command
             Payment::query()->delete();
             Expense::query()->delete();
             Income::query()->delete();
+            DriverAttendance::query()->delete();
+            DriverSalaryAdjustment::query()->delete();
             Driver::query()->delete();
             Customer::query()->delete();
             Vehicle::query()->delete();

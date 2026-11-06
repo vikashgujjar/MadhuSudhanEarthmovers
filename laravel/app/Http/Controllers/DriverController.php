@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Driver;
+use App\Models\DriverAttendance;
 use App\Models\Expense;
 use App\Models\Vehicle;
 use App\Reports\ReportTable;
@@ -10,6 +11,7 @@ use App\Services\Audit;
 use App\Support\Money;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class DriverController extends Controller
@@ -32,11 +34,11 @@ class DriverController extends Controller
         $export = $this->export($request, fn () => new ReportTable(
             title: 'Driver Register',
             columns: [['Name', 'name', 'text'], ['Phone', 'phone', 'text'], ['Licence no.', 'license', 'text'],
-                ['Licence expiry', 'expiry', 'date'], ['Assigned vehicle', 'vehicle', 'text'],
+                ['Licence expiry', 'expiry', 'date'], ['Assigned vehicle', 'vehicle', 'text'], ['Joined', 'joined', 'date'],
                 ['Monthly salary', 'salary', 'money'], ['Daily allowance', 'bata', 'money'], ['Status', 'status', 'text']],
             rows: $this->query($request)->get()->map(fn (Driver $d) => [
                 'name' => $d->name, 'phone' => $d->phone, 'license' => $d->license_number, 'expiry' => $d->license_expiry,
-                'vehicle' => $d->assignedVehicle?->displayName() ?? '', 'salary' => $d->monthly_salary,
+                'vehicle' => $d->assignedVehicle?->displayName() ?? '', 'joined' => $d->joining_date, 'salary' => $d->monthly_salary,
                 'bata' => $d->daily_allowance, 'status' => $d->statusLabel(),
             ])->all(),
         ));
@@ -58,7 +60,16 @@ class DriverController extends Controller
             'expenses' => Expense::visibleTo($user)->where('driver_id', $driver->id)->with('vehicle')
                 ->orderByDesc('date')->orderByDesc('id')->limit(15)->get(),
             'period' => null,
+            'attendance' => null,
         ];
+        // The attendance table arrives with a later database update; until it is applied, hide the section.
+        if (Schema::hasTable('driver_attendances')) {
+            $month = DriverAttendance::monthFrom($request->query('month'));
+            $data['attendanceMonth'] = $month;
+            $data['attendance'] = $driver->attendances()->whereBetween('date', [$month->toDateString(), $month->endOfMonth()->toDateString()])
+                ->orderByDesc('date')->get();
+            $data['attendanceCounts'] = DriverAttendance::summarise($data['attendance']);
+        }
         if ($user->hasCapability('view_reports')) {
             $period = $this->period($request);
             $approved = Expense::approved()->between($period->startDate(), $period->endDate())
@@ -152,7 +163,7 @@ class DriverController extends Controller
     public function destroy(Driver $driver)
     {
         return $this->auditedDelete($driver, "{$driver} deleted.", 'drivers.index',
-            'This driver has expense records and cannot be deleted. Mark the driver Inactive instead.',
+            'This driver has expense, attendance or salary adjustment records and cannot be deleted. Mark the driver Inactive instead.',
             route('drivers.show', $driver));
     }
 }
