@@ -12,6 +12,7 @@ use App\Http\Controllers\InstallController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PersonalExpenseController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserController;
@@ -85,6 +86,9 @@ Route::middleware('auth')->group(function () {
         Route::get('loans/{loan}/repayments/{repayment}/delete', [LoanController::class, 'confirmDeleteRepayment'])
             ->whereNumber(['loan', 'repayment'])->name('loans.repayments.delete');
         Route::post('loans/{loan}/repayments/{repayment}/delete', [LoanController::class, 'destroyRepayment'])->whereNumber(['loan', 'repayment']);
+
+        Route::get('personal-expenses/{personalExpense}/delete', [PersonalExpenseController::class, 'confirmDelete'])->whereNumber('personalExpense')->name('personal-expenses.delete');
+        Route::post('personal-expenses/{personalExpense}/delete', [PersonalExpenseController::class, 'destroy'])->whereNumber('personalExpense');
     });
 
     // Fleet
@@ -144,6 +148,16 @@ Route::middleware('auth')->group(function () {
         Route::get('finance/api/open-invoices', [PaymentController::class, 'openInvoices'])->name('api.invoices');
     });
     Route::get('finance/payments/{payment}', [PaymentController::class, 'show'])->whereNumber('payment')->name('payments.show');
+
+    // Owner's personal expenses (admins, plus users given the permission; deleting is admin-only above)
+    Route::middleware('can:manage_personal_expenses')->group(function () {
+        Route::get('personal-expenses', [PersonalExpenseController::class, 'index'])->name('personal-expenses.index');
+        Route::get('personal-expenses/new', [PersonalExpenseController::class, 'create'])->name('personal-expenses.create');
+        Route::post('personal-expenses/new', [PersonalExpenseController::class, 'store']);
+        Route::get('personal-expenses/{personalExpense}', [PersonalExpenseController::class, 'show'])->whereNumber('personalExpense')->name('personal-expenses.show');
+        Route::get('personal-expenses/{personalExpense}/edit', [PersonalExpenseController::class, 'edit'])->whereNumber('personalExpense')->name('personal-expenses.edit');
+        Route::post('personal-expenses/{personalExpense}/edit', [PersonalExpenseController::class, 'update'])->whereNumber('personalExpense');
+    });
 
     // Reports
     Route::middleware('can:view_reports')->group(function () {
